@@ -70,7 +70,7 @@ ON Target.PaymentOid__c = Source.PaymentOid__c -- Add any additional conditions 
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.OpportunityID__c = Source.Opportunity__c,
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.ReferenceNumber__c = Source.ReferenceNumber__c,
         Target.InvoiceHeaderOid__c = Source.InvoiceHeaderOid__c,
         Target.InvoiceDetailOid__c = Source.InvoiceDetailOid__c,
