@@ -49,7 +49,7 @@ FROM [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Payment] P LEFT OUTER JOIN
 [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[LTIValues] LTIV ON LTIV.OID = P.PaymentMethodOid LEFT OUTER JOIN
 [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[CashReceiptHeader] CRH ON CRH.PaymentOID = P.PaymentOID LEFT OUTER JOIN
 [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[CashReceiptBillable] CRB ON CRB.CashReceiptHeaderOID = CRH.CashReceiptHeaderOID LEFT OUTER JOIN
-[ASPIRESQL].[ASPIREDakotaTEST].[dbo].[CashReceiptDetail] CRD ON CRD.CashReceiptBillableOid = CRB.CashReceiptBillableOid INNER JOIN
+[ASPIRESQL].[ASPIREDakotaTEST].[dbo].[CashReceiptHeader] CRD ON CRD.CashReceiptBillableOid = CRB.CashReceiptBillableOid INNER JOIN
 [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Contract] C ON c.ContractOid = p.ContractOid LEFT OUTER JOIN
 [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[InvoiceDetail] ID ON ID.InvoiceDetailOid = CRD.InvoiceDetailOid LEFT OUTER JOIN
 
@@ -63,20 +63,19 @@ FROM [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Payment] P LEFT OUTER JOIN
 
 
 /*below is where datetime comparison is done*/
-WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1)) AS Source
-ON Target.PaymentOid__c = Source.PaymentOid__c -- Add any additional conditions for matching records
+WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1) AND (p.contractOID IN ('13582', '13563', '13643'))) AS Source
+ON Target.InvoiceDetailOid__c = Source.InvoiceDetailOid__c AND Target.ReferenceNumber__c = Source.ReferenceNumber__c -- Add any additional conditions for matching records
 
 /* Upsert Capabilities */
 
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
-        Target.ReferenceNumber__c = Source.ReferenceNumber__c,
+        Target.PaymentOid__c = Source.PaymentOid__c,
         Target.InvoiceHeaderOid__c = Source.InvoiceHeaderOid__c,
-        Target.InvoiceDetailOid__c = Source.InvoiceDetailOid__c,
         Target.descr__c = Source.descr__c,
         Target.AppliedAmount__c = Source.AppliedAmount__c,
-        Target.PostDate__c = Source.PostDate__c,
+		Target.PostDate__c = Source.PostDate__c,
         Target.EffectiveDate__c = Source.EffectiveDate__c,
         Target.IsPosted__c = Source.IsPosted__c,
         Target.IsReturned__c = Source.IsReturned__c,

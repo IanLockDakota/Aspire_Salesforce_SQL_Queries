@@ -34,16 +34,17 @@ USING (SELECT
     InvoicedPymnts.startDate AS FirstPayment__c,
     CASE
 		WHEN UnInvoicedPymnts.startDate > GETDATE() THEN InvoicedPymnts.startDate
-		WHEN UnInvoicedPymnts.startDate < GETDATE() AND contract.isTerminated = 1 THEN NULL
-		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND MONTH(UnInvoicedPymnts.startDate) = 12 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()) + 1, 1, DAY(UnInvoicedPymnts.startDate)))
-		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), DAY(UnInvoicedPymnts.startDate)))
+		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) > 0 AND MONTH(UnInvoicedPymnts.startDate) = 12 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()) + 1, 1, DAY(UnInvoicedPymnts.startDate)))
+		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) > 0 THEN DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), DAY(UnInvoicedPymnts.startDate))
+        WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) < 0 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), DAY(UnInvoicedPymnts.startDate)))
+        WHEN UnInvoicedPymnts.startDate < GETDATE() AND contract.isTerminated = 1 THEN NULL
 		ELSE NULL
 	END AS NextPayment__c,
     ContractTerm.MaturityDate AS MaturityDate__c,
     InvoicedPymnts.LastChangeDateTime AS LastChangeDateTime__c,
     InvoicedPymnts.LastChangeOperator AS LastChangeOperator__c
 FROM
-    [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[ContractTerm] INNER JOIN
+    [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[ContractTerm] LEFT OUTER JOIN
     (
         SELECT
             PaymentStream.ContractTermOid,
@@ -103,12 +104,13 @@ INNER JOIN
     ) AS OppIDTable ON OppIDTable.contractOid = Contract.contractOID
 WHERE
     (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1)) AS Source
-ON Target.Opportunity__c = Source.Opportunity__c
+ON Target.ContractOID__c = Source.ContractOID__c
 
 /*Upsert capabilities*/
 
 WHEN MATCHED THEN
     UPDATE SET
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.TtlSchPymts__c = Source.TtlSchPymts__c,
         Target.InvPymtsAmount__c = Source.InvPymtsAmount__c,
         Target.UninvPymtsAmount__c = Source.UninvPymtsAmount__c,
@@ -121,6 +123,7 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
     INSERT (
         ID,
+        ContractOID__c,
         Opportunity__c,
         TtlSchPymts__c,
         InvPymtsAmount__c,
@@ -132,6 +135,7 @@ WHEN NOT MATCHED THEN
         LastChangeOperator__c
     ) VALUES (
         Source.ID,
+        Source.ContractOID__c,
         Source.Opportunity__c,
         Source.TtlSchPymts__c,
         Source.InvPymtsAmount__c,

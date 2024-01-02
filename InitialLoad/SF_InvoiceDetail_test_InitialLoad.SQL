@@ -57,13 +57,13 @@ FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN
 
 /*below is where datetime comparison is done*/
 WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (IH.IsPosted = 1)) AS Source
-ON Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c
+ON Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c
 
 /*Upsert capabilities*/
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c,
+        Target.InvoiceHeaderOID__c = Source.InvoiceDetailOID__c,
         Target.InvoicePaymentMethod__c = Source.InvoicePaymentMethod__c,
         Target.Description__c = Source.Description__c,
         Target.OriginalDueAmount__c = Source.OriginalDueAmount__c,
