@@ -63,7 +63,7 @@ FROM [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Payment] P LEFT OUTER JOIN
 
 
 /*below is where datetime comparison is done*/
-WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1) AND (p.contractOID IN ('13582', '13563', '13643'))) AS Source
+WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1)) AS Source
 ON Target.InvoiceDetailOid__c = Source.InvoiceDetailOid__c AND Target.ReferenceNumber__c = Source.ReferenceNumber__c -- Add any additional conditions for matching records
 
 /* Upsert Capabilities */

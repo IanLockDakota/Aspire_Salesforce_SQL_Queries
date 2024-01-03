@@ -148,18 +148,3 @@ WHEN NOT MATCHED THEN
         source.LastChangeOperator__c
     
     );
-
-
-
-/*
-	CASE
-		WHEN ps.isInvoiced = 0 THEN 
-			(CASE
-				WHEN c.isTerminated = 1 THEN NULL
-				WHEN c.isterminated = 0 THEN PS.startDate
-				ELSE NULL
-			END)
-		WHEN ps.isInvoiced = 1 THEN NULL
-		ELSE NULL
-	END as NextPaymentDate__c
-*/
