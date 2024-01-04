@@ -34,7 +34,7 @@ ID.InvoiceHeaderOid AS InvoiceHeaderOID__c, /* MISSING */
 ID.InvoiceDetailOid AS InvoiceDetailOID__c, 
 LTVI.data_value AS InvoicePaymentMethod__c, /* MISSING */
 TC.Description AS Description__c,
-ID.OriginalDueAmount AS OriginialDueAmount__c,
+ID.OriginalDueAmount AS OriginalDueAmount__c,
 ID.CurrentDueAmount AS CurrentDueAmount__c,
 IH.InvoiceDate AS InvoiceDate__C, /* MISSING */
 IH.DueDate AS DueDate__c,
@@ -67,10 +67,10 @@ ON Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c,
+        Target.InvoiceHeaderOID__c = Source.InvoiceDetailOID__c,
         Target.InvoicePaymentMethod__c = Source.InvoicePaymentMethod__c,
         Target.Description__c = Source.Description__c,
-        Target.OriginialDueAmount__c = Source.OriginialDueAmount__c,
+        Target.OriginalDueAmount__c = Source.OriginalDueAmount__c,
         Target.CurrentDueAmount__c = Source.CurrentDueAmount__c,
         Target.InvoiceDate__C = Source.InvoiceDate__C,
         Target.DueDate__c = Source.DueDate__c,
@@ -86,7 +86,7 @@ WHEN NOT MATCHED THEN
         InvoiceHeaderOID__c,
         InvoicePaymentMethod__c,
         Description__c,
-        OriginialDueAmount__c,
+        OriginalDueAmount__c,
         CurrentDueAmount__c,
         InvoiceDate__C,
         DueDate__c,
@@ -100,7 +100,7 @@ WHEN NOT MATCHED THEN
         Source.InvoiceHeaderOID__c,
         Source.InvoicePaymentMethod__c,
         Source.Description__c,
-        Source.OriginialDueAmount__c,
+        Source.OriginalDueAmount__c,
         Source.CurrentDueAmount__c,
         Source.InvoiceDate__C,
         Source.DueDate__c,

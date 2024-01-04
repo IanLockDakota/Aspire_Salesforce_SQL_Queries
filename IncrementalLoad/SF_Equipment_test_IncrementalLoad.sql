@@ -134,9 +134,11 @@ ON Target.EquipmentOID__c = Source.EquipmentOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.EquipmentOID__c = Source.EquipmentOID__c,
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.serialnumber__c = Source.serialnumber__c,
+        Target.EquipmentLocation__c = Source.EquipmentLocation__c,
         Target.PaymentAmount__C = Source.PaymentAmount__C,
+        Target.PaymentTaxAmount__C = Source.PaymentTaxAmount__C,
         Target.BillThroughDate__c = Source.BillThroughDate__c,
         Target.DisposalType__c = Source.DisposalType__c,
         Target.DisposalAmount__c = Source.DisposalAmount__c,
@@ -152,7 +154,9 @@ WHEN NOT MATCHED THEN
         Opportunity__c,
         EquipmentOID__c,
         serialnumber__c,
+		EquipmentLocation__c,
         PaymentAmount__C,
+		PaymentTaxAmount__C,
         BillThroughDate__c,
         DisposalType__c,
         DisposalAmount__c,
@@ -167,7 +171,9 @@ WHEN NOT MATCHED THEN
         Source.Opportunity__c,
         Source.EquipmentOID__c,
         Source.serialnumber__c,
+		Source.EquipmentLocation__c,
         Source.PaymentAmount__C,
+		Source.PaymentTaxAmount__C,
         Source.BillThroughDate__c,
         Source.DisposalType__c,
         Source.DisposalAmount__c,
@@ -177,33 +183,3 @@ WHEN NOT MATCHED THEN
         Source.ceLastChangeOperator__c,
         Source.ceLastChangeDateTime__c
     );
-
-
-/* LCDT COMPARISON CHECK 
-
-SELECT Contract.ContractOid, Contract.StatusDate AS startDate, ContractItem.ContractItemOid, ContractEquipment.ContractEquipmentOid, PaymentStreamContractItem.PaymentStreamContractItemOid, ContractEquipment.EquipmentOid, 
-                  EquipmentId.SerialNumber, ContractDisposedAsset.ContractDisposedAssetOid, ContractItem.LastChangeDateTime AS [ci.LCDT], ContractEquipment.LastChangeDateTime AS [ce.LCDT], 
-                  PaymentStreamContractItem.LastChangeDateTime AS [psci.LCDT], EquipmentId.LastChangeDateTime AS [eid.LCDT], ContractDisposedAsset.LastChangeDateTime AS [cda.LCDT], CASE
-        WHEN DATEDIFF(hour, ContractEquipment.LastChangeDateTime, EquipmentId.LastChangeDateTime) < 6 THEN 'LESS THAN 6H'
-        WHEN DATEDIFF(hour, ContractEquipment.LastChangeDateTime, EquipmentId.LastChangeDateTime) > 6 THEN 'MORE THAN 6H'
-        ELSE 'ERROR'
-    END AS 'ContractEquipment vs EquipmentId datediff',
-	CASE
-        WHEN ContractEquipment.LastChangeDateTime < EquipmentId.LastChangeDateTime THEN 'EquipmentId.LastChangeDateTime'
-        WHEN ContractEquipment.LastChangeDateTime > EquipmentId.LastChangeDateTime THEN 'ContractEquipment.LastChangeDateTime'
-        ELSE 'ERROR'
-    END AS 'ContractEquipment <>= EquipmentId LCDT'
-FROM     Contract LEFT OUTER JOIN
-                  ContractDisposedAsset ON Contract.ContractOid = ContractDisposedAsset.ContractOid AND Contract.ContractOid = ContractDisposedAsset.ContractOid LEFT OUTER JOIN
-                  ContractEquipment ON Contract.ContractOid = ContractEquipment.ContractOid LEFT OUTER JOIN
-                  ContractItem ON Contract.ContractOid = ContractItem.ContractOid AND ContractDisposedAsset.ContractItemOid = ContractItem.ContractItemOid AND 
-                  ContractEquipment.ContractEquipmentOid = ContractItem.ContractEquipmentOid LEFT OUTER JOIN
-                  Equipment ON ContractEquipment.EquipmentOid = Equipment.EquipmentOid LEFT OUTER JOIN
-                  EquipmentId ON Equipment.EquipmentOid = EquipmentId.EquipmentOid LEFT OUTER JOIN
-                  EquipmentLocationHistory ON Contract.ContractOid = EquipmentLocationHistory.ContractOid AND Equipment.EquipmentOid = EquipmentLocationHistory.EquipmentOid LEFT OUTER JOIN
-                  Location ON Contract.RemitToOid = Location.oid AND Contract.BillToLocationOid = Location.oid AND Contract.EquipmentLocationOid = Location.oid AND Contract.TaxLocationOid = Location.oid AND 
-                  ContractEquipment.BilltoLocationOid = Location.oid AND ContractItem.BillToLocationOid = Location.oid AND ContractItem.LocationOid = Location.oid AND EquipmentLocationHistory.LocationOid = Location.oid LEFT OUTER JOIN
-                  PaymentStreamContractItem ON ContractItem.ContractItemOid = PaymentStreamContractItem.ContractItemOid
-ORDER BY Contract.ContractOid
-
-*/

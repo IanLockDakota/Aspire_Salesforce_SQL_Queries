@@ -44,16 +44,19 @@ WITH CurrentDaySnapshot AS (
 
 /* Pulling in snapshot of accounting data, currently in SF*/ 
 PreviousDaySnapshot AS (
-    SELECT ISNULL(ContractOid__c,0) AS ContractOID, 
-    SUM(ISNULL(Gross_Receivable__C,0)) AS [Gross Receivable],
-    SUM(ISNULL(Balance_Remaining__C,0)) AS [Balance Remaining], 
-    SUM(ISNULL(Unearned_Finance__C,0)) AS [Unearned Finance], 
-    SUM(ISNULL(Residual__C,0)) AS Residual, 
-    SUM(ISNULL(Deferred_Residual__C,0)) AS [Deferred Residual], 
-    SUM(ISNULL(Deferred_Expense__C,0)) AS [Deferred Expense], 
-    SUM(ISNULL(Security_Deposit__C,0)) AS [Security Deposit]
-        FROM [SALESFORCE3].[cdata].[SALESFORCE].[Accounting_ASPIRE__c]
-            GROUP BY ContractOid__c
+SELECT
+		Opportunity__c, 
+		ContractOid__c, 
+		Gross_Receivable__c, 
+		Payments_Made__c, 
+		Balance_Remaining__c, 
+		Unearned_Finance__c, 
+		Residual__c, 
+		Deferred_Residual__c, 
+		Deferred_Expense__c, 
+		Security_Deposit__c
+    FROM 
+		[SALESFORCE3].[cdata].[SALESFORCE].[Accounting_ASPIRE__c]
 ),
 
 /* Pulling Oppurtunity ID */
@@ -267,20 +270,19 @@ DPDTerm AS (SELECT
                             con.ContractOid) AS OldRentDueDtTERM INNER JOIN
                     [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C ON c.contractOID = OldRentDueDtTERM.ContractOid),
 
-/* Subquery determines if data has changed between the two datasets above. Upsert will only update where the ChangeStatus field has 'Data Changed' listed */
 Subquery AS (
     SELECT        
         C.ContractOid,
         OppIDTable.opportunityID As opportunityID,
         CASE
-            WHEN CurrentDay.[Gross Receivable] <> PreviousDay.[Gross Receivable]
-                 OR (CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining]) <> (PreviousDay.[Gross Receivable] - PreviousDay.[Balance Remaining])
-                 OR CurrentDay.[Balance Remaining] <> PreviousDay.[Balance Remaining]
-                 OR CurrentDay.[Unearned Finance] <> PreviousDay.[Unearned Finance]
-                 OR CurrentDay.Residual <> PreviousDay.Residual
-                 OR CurrentDay.[Deferred Residual] <> PreviousDay.[Deferred Residual]
-                 OR CurrentDay.[Deferred Expense] <> PreviousDay.[Deferred Expense]
-                 OR CurrentDay.[Security Deposit] <> PreviousDay.[Security Deposit]
+            WHEN CurrentDay.[Gross Receivable] <> PreviousDay.[Gross_Receivable__c]
+                 OR (CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining]) <> (PreviousDay.[Gross_Receivable__c] - PreviousDay.[Balance_Remaining__c])
+                 OR CurrentDay.[Balance Remaining] <> PreviousDay.[Balance_Remaining__c]
+                 OR CurrentDay.[Unearned Finance] <> PreviousDay.[Unearned_Finance__c]
+                 OR CurrentDay.Residual <> PreviousDay.Residual__c
+                 OR CurrentDay.[Deferred Residual] <> PreviousDay.[Deferred_Residual__c]
+                 OR CurrentDay.[Deferred Expense] <> PreviousDay.[Deferred_Expense__c]
+                 OR CurrentDay.[Security Deposit] <> PreviousDay.[Security_Deposit__c]
             THEN 'Data Changed'
             ELSE 'No Changes'
         END AS ChangeStatus,
@@ -303,7 +305,7 @@ Subquery AS (
     LEFT OUTER JOIN
         CurrentDaySnapshot AS CurrentDay ON c.ContractOid = CurrentDay.ContractOid
     LEFT OUTER JOIN
-        PreviousDaySnapshot AS PreviousDay ON c.ContractOid = PreviousDay.ContractOid
+        PreviousDaySnapshot AS PreviousDay ON c.ContractOid = PreviousDay.ContractOid__c
     LEFT OUTER JOIN
         OppIDTable AS OppIDTable ON C.ContractOid = OppIDTable.ref_oid
     LEFT OUTER JOIN
@@ -339,11 +341,12 @@ ISNULL(sbq.DPD_at_Termination, 0) AS DPD_at_Termination__c,
 ISNULL(sbq.Payments_Made_At_Termination, 0) AS Payments_Made_At_Termination__c,
 ISNULL(sbq.Balance_Remaining_At_Termination, 0) AS Balance_Remaining_At_Termination__c
 FROM Subquery sbq
-WHERE ChangeStatus = 'Data Changed') AS Source
-ON Target.Opportunity__c = Source.Opportunity__c
+WHERE sbq.ChangeStatus = 'Data Changed') AS Source
+ON Target.contractOID__c = Source.contractOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.Gross_Receivable__c = Source.Gross_Receivable__c,
         Target.Payments_Made__c = Source.Payments_Made__c,
         Target.Balance_Remaining__c = Source.Balance_Remaining__c,
@@ -362,6 +365,7 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
     INSERT (
         ID,
+        contractOID__c,
         Opportunity__c,
         Gross_Receivable__c,
         Payments_Made__c,
@@ -379,6 +383,7 @@ WHEN NOT MATCHED THEN
         Balance_Remaining_At_termination__C
     ) VALUES (
         Source.ID,
+        Source.contractOID,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
         Source.Payments_Made__c,

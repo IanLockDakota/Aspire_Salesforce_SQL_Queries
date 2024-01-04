@@ -63,7 +63,7 @@ ON Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.InvoiceHeaderOID__c = Source.InvoiceDetailOID__c,
+        Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c,
         Target.InvoicePaymentMethod__c = Source.InvoicePaymentMethod__c,
         Target.Description__c = Source.Description__c,
         Target.OriginalDueAmount__c = Source.OriginalDueAmount__c,
@@ -78,8 +78,8 @@ WHEN NOT MATCHED THEN
     INSERT (
         ID,
         Opportunity__c,
-        InvoiceDetailOID__c,
         InvoiceHeaderOID__c,
+        InvoiceDetailOID__c,
         InvoicePaymentMethod__c,
         Description__c,
         OriginalDueAmount__c,
@@ -92,8 +92,8 @@ WHEN NOT MATCHED THEN
     ) VALUES (
         Source.ID,
         Source.Opportunity__c,
+        Source.InvoiceHeaderOID__c, 
         Source.InvoiceDetailOID__c,
-        Source.InvoiceHeaderOID__c,
         Source.InvoicePaymentMethod__c,
         Source.Description__c,
         Source.OriginalDueAmount__c,

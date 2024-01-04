@@ -43,6 +43,7 @@ USING (SELECT
 	PS.PaymentStreamOID AS PaymentStreamOID__c,
 	PS.StartDate AS StartDate__c,
 	PS.Occurrences AS Occurrences__c,
+    /*HOW MANY REMAINING - uninvoiced*/
 	PS.Frequency AS Frequency__c,
 	PS.isInvoiced AS isInvoiced__c,
     PSCI.PaymentStreamContractItemOID AS PaymentStreamContractItemOID__c,
@@ -50,8 +51,8 @@ USING (SELECT
 	PSCI.OnStreamTaxAmount AS OnStreamTaxAmount__c,
 	PSCI.Amount + PSCI.OnStreamTaxAmount AS TtlAmt__C,
 	CASE
-		WHEN ps.IsInvoiced = 0 THEN ps.StartDate
-		WHEN ps.IsInvoiced = 1 THEN NULL
+		WHEN (c.isTerminated = 1) THEN NULL
+		WHEN (c.isTerminated = 0) AND (ps.isInvoiced = 0) AND (ps.startDate > GETDATE()) THEN ps.StartDate
 		ELSE NULL
 	END as NextPaymentDate__c,
 	PS.LastChangeDateTime AS LastChangeDateTime__c,
@@ -80,6 +81,7 @@ USING (SELECT
 
 WHEN MATCHED THEN
     UPDATE SET
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.ScheduleDefinitionOID__c = Source.ScheduleDefinitionOID__c,
         Target.RecurringBillableOid__c = Source.RecurringBillableOid__c,
         Target.IsFollowingRent__c = Source.IsFollowingRent__c,
@@ -112,6 +114,7 @@ WHEN NOT MATCHED THEN
         IsBillAfterTermination__c,
         TCTransCDesc__C,
         TransCDesc__c,
+        PaymentStreamOID__c,
         StartDate__c,
         Occurrences__c,
         Frequency__c,
@@ -127,7 +130,7 @@ WHEN NOT MATCHED THEN
     ) VALUES (
         source.ID,
         source.Opportunity__c,
-        ScheduleDefinitionOID__c,
+        source.ScheduleDefinitionOID__c,
         source.RecurringBillableOid__c,
         source.IsFollowingRent__c,
         source.IsCombinedWithRent__c,
@@ -135,6 +138,7 @@ WHEN NOT MATCHED THEN
         source.IsBillAfterTermination__c,
         source.TCTransCDesc__C,
         source.TransCDesc__c,
+        source.PaymentStreamOID__c,
         source.StartDate__c,
         source.Occurrences__c,
         source.Frequency__c,
@@ -148,18 +152,3 @@ WHEN NOT MATCHED THEN
         source.LastChangeOperator__c
     
     );
-
-
-
-/*
-	CASE
-		WHEN ps.isInvoiced = 0 THEN 
-			(CASE
-				WHEN c.isTerminated = 1 THEN NULL
-				WHEN c.isterminated = 0 THEN PS.startDate
-				ELSE NULL
-			END)
-		WHEN ps.isInvoiced = 1 THEN NULL
-		ELSE NULL
-	END as NextPaymentDate__c
-*/

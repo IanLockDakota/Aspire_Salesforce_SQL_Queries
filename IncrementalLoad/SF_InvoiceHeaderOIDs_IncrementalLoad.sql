@@ -1,3 +1,8 @@
+
+-- DATETIME VARIABLES
+DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
+DECLARE @end DATETIME = GETDATE()
+
 MERGE INTO InvoiceHeader_ASPIRE__c_upsert AS Target
 USING (SELECT DISTINCT
     NULL AS ID,
@@ -18,8 +23,8 @@ FROM
                                   GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
                                 ) AS OppIDTable ON c.ContractOid = OppIDTable.ref_oid
 WHERE
-	IH.InvoiceHeaderOID IS NOT NULL) AS Source
-ON Target.Name = Source.InvoiceHeaderOID__c
+	IH.InvoiceHeaderOID IS NOT NULL AND (IH.LastChangeDateTime BETWEEN @start and @end)) AS Source
+ON Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
@@ -30,12 +35,14 @@ WHEN NOT MATCHED THEN
         ID,
         Opportunity__c,
         InvoiceHeaderOID__c,
+        PaymentOID__c,
         IHLastChangeOperator__c,
         IHLastChangeDatetime__c
     ) VALUES (
         Source.ID,
         Source.Opportunity__c,
         Source.InvoiceHeaderOID__c,
+        Source.PaymentOID__c,
         Source.IHLastChangeOperator__c,
         Source.IHLastChangeDatetime__c
     );
