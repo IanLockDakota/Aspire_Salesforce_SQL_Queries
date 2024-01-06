@@ -31,8 +31,10 @@ NULL AS ID,
 C.ContractOID AS ContractOID__c,
 OppIDTable.opportunityID AS Opportunity__c,
 ID.InvoiceHeaderOid AS InvoiceHeaderOID__c, /* MISSING */
-ID.InvoiceDetailOid AS InvoiceDetailOID__c, 
+ID.InvoiceDetailOid AS InvoiceDetailOID__c,
+ID.OpenClosedOID AS PaymentMethodOID__c,
 LTVI.data_value AS InvoicePaymentMethod__c, /* MISSING */
+ID.TransactionCodeOID AS TransactionCode__C,
 TC.Description AS Description__c,
 ID.OriginalDueAmount AS OriginalDueAmount__c,
 ID.CurrentDueAmount AS CurrentDueAmount__c,
@@ -44,8 +46,8 @@ ID.LastChangeDateTime  AS LastChangeDatetime__c /* MISSING */
 
 
 FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN 
-[ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] ID INNER JOIN
-[ASPIRESQL].[AspireDakotaTest].[dbo].[TransactionCode] TC ON ID.TransactionCodeOid = TC.TransactionCodeOid ON C.ContractOid = ID.ContractOid  INNER JOIN
+[ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] ID LEFT OUTER JOIN
+[ASPIRESQL].[AspireDakotaTest].[dbo].[TransactionCode] TC ON ID.TransactionCodeOid = TC.TransactionCodeOid ON C.ContractOid = ID.ContractOid  LEFT OUTER JOIN
 [ASPIRESQL].[AspireDakotaTest].[dbo].[LTIValues] LTVI ON LTVI.OID = ID.OpenClosedOid LEFT OUTER JOIN
 [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceHeader] IH ON IH.InvoiceHeaderOID = ID.InvoiceHeaderOID LEFT OUTER JOIN
                                 
@@ -60,15 +62,17 @@ FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN
                                 ) AS OppIDTable ON c.ContractOid = OppIDTable.ref_oid
 
 /*below is where datetime comparison is done*/
-WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (IH.IsPosted = 1) AND (ID.LastChangeDateTime BETWEEN @start and @end)) AS Source
-ON Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c
+WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (IH.IsPosted = 1)) AS Source
+ON Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c
 
 /*Upsert capabilities*/
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.InvoiceHeaderOID__c = Source.InvoiceDetailOID__c,
+        Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c,
         Target.InvoicePaymentMethod__c = Source.InvoicePaymentMethod__c,
+        Target.PaymentMethodOID__c = Source.PaymentMethodOID__c,
+        Target.TransactionCode__C = Source.TransactionCode__C,
         Target.Description__c = Source.Description__c,
         Target.OriginalDueAmount__c = Source.OriginalDueAmount__c,
         Target.CurrentDueAmount__c = Source.CurrentDueAmount__c,
@@ -82,9 +86,11 @@ WHEN NOT MATCHED THEN
     INSERT (
         ID,
         Opportunity__c,
-        InvoiceDetailOID__c,
         InvoiceHeaderOID__c,
+        InvoiceDetailOID__c,
+        PaymentMethodOID__c,
         InvoicePaymentMethod__c,
+        TransactionCode__C,
         Description__c,
         OriginalDueAmount__c,
         CurrentDueAmount__c,
@@ -96,9 +102,10 @@ WHEN NOT MATCHED THEN
     ) VALUES (
         Source.ID,
         Source.Opportunity__c,
+        Source.InvoiceHeaderOID__c, 
         Source.InvoiceDetailOID__c,
-        Source.InvoiceHeaderOID__c,
         Source.InvoicePaymentMethod__c,
+        Source.TransactionCode__C,
         Source.Description__c,
         Source.OriginalDueAmount__c,
         Source.CurrentDueAmount__c,
