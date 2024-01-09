@@ -42,7 +42,7 @@ IH.InvoiceDate AS InvoiceDate__C, /* MISSING */
 IH.DueDate AS DueDate__c,
 ID.IsPaid AS IsPaid__C, /* MISSING */
 ID.LastChangeOperator AS LastChangeOperator__c, /* MISSING */
-ID.LastChangeDateTime  AS LastChangeDatetime__c /* MISSING */
+ID.LastChangeDateTime AS LastChangeDatetime__c /* MISSING */
 
 
 FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN 
@@ -62,7 +62,7 @@ FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN
                                 ) AS OppIDTable ON c.ContractOid = OppIDTable.ref_oid
 
 /*below is where datetime comparison is done*/
-WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (IH.IsPosted = 1)) AS Source
+WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (IH.IsPosted = 1) AND (ID.LastChangeDateTime BETWEEN @start AND @end)) AS Source
 ON Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c
 
 /*Upsert capabilities*/

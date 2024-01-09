@@ -1,7 +1,8 @@
-MERGE INTO CustomerService_ASPIRE__c_upsert AS Target
+MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
 	c.contractOID AS ContractOID__C,
+	OppIDTable.Opportunity AS Opportunity__c,
 	chen.entt_oid AS EntityOID__C, 
 	r.descr AS RoleType__c,
 	e.name AS Name__C,
@@ -11,6 +12,7 @@ USING (SELECT
 	ctxloc.FullAddress AS TaxLocation__c,
 	celoc.FullAddress AS CEBillToLocation__c,
 	e.email_addr AS EmailAddress__c,
+	ph.OID AS PhoneOID__c,
 	ISNULL(ph.phone_type, NULL) AS PhoneType__c,
 	ISNULL(ph.phone_num, NULL) AS PhoneNumber__c,
 	ISNULL(ph.extension, NULL) AS Extension__c,
@@ -19,27 +21,27 @@ USING (SELECT
     CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE collector.name END AS CollectorName__c,
     CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.PermanentCollectionAssignmentFlag END AS PermanentCollectionAssignmentFlag__c
 FROM
-	Contract c
-	LEFT OUTER JOIN ChildEntity chen ON chen.ref_oid = c.contractOID
-	LEFT OUTER JOIN role r ON r.oid = chen.role_oid
-	LEFT OUTER JOIN Entity e ON chen.entt_oid = e.oid
+	[ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[ChildEntity] chen ON chen.ref_oid = c.contractOID
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[role] r ON r.oid = chen.role_oid
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Entity] e ON chen.entt_oid = e.oid
 	LEFT OUTER JOIN
 		(SELECT DISTINCT
 			e.CollectorOid,
 			e2.name
 		FROM 
-			Entity e
-			LEFT OUTER JOIN Entity e2 ON e.collectorOID = e2.oid
+			[ASPIRESQL].[AspireDakotaTest].[dbo].[Entity] e
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Entity] e2 ON e.collectorOID = e2.oid
 		WHERE
 			e2.name IS NOT NULL) AS collector ON e.collectorOID = collector.CollectorOid
-	LEFT OUTER JOIN Phone ph ON chen.entt_oid = ph.entt_oid
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Phone] ph ON chen.entt_oid = ph.entt_oid
 	LEFT OUTER JOIN
 		(SELECT 
 			c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
 		FROM 
-			GenericField GF 
-			LEFT OUTER JOIN cdataGenericValue GV ON GF.oid = GV.genf_oid 
-			LEFT OUTER JOIN Contract c ON c.ContractOid = gv.ref_oid
+			[ASPIRESQL].[AspireDakotaTest].[dbo].[GenericField] GF 
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid 
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
 		WHERE 
 			GF.oid = 23
 		GROUP BY 
@@ -50,32 +52,41 @@ FROM
 			c.BillToLocationOid,
 			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress
 		FROM
-			contract c
-			LEFT OUTER JOIN contractEquipment ce ON c.contractOID = ce.ContractOid
-			LEFT OUTER JOIN Location loc ON c.BillToLocationOid = loc.oid) AS cbtlloc ON c.contractOID = cbtlloc.contractOID
+			[ASPIRESQL].[AspireDakotaTest].[dbo].[contract] c
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[contractEquipment] ce ON c.contractOID = ce.ContractOid
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Location] loc ON c.BillToLocationOid = loc.oid) AS cbtlloc ON c.contractOID = cbtlloc.contractOID
 	LEFT OUTER JOIN
 		(SELECT DISTINCT
 			c.contractOID,
 			c.TaxLocationOid,
 			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress
 		FROM
-			contract c
-			LEFT OUTER JOIN Location loc ON c.TaxLocationOid = loc.oid) AS ctxloc ON c.contractOID = ctxloc.contractOID
+			[ASPIRESQL].[AspireDakotaTest].[dbo].[contract] c
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Location] loc ON c.TaxLocationOid = loc.oid) AS ctxloc ON c.contractOID = ctxloc.contractOID
 	LEFT OUTER JOIN
 		(SELECT DISTINCT
 			c.contractOID,
 			ce.BilltoLocationOid AS ceBillToLocationOID,
 			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress
 		FROM
-			contract c
-			LEFT OUTER JOIN contractEquipment ce ON c.contractOID = ce.ContractOid
-			LEFT OUTER JOIN Location loc ON ce.BilltoLocationOid = loc.oid) AS celoc ON c.contractOID = celoc.contractOID
+			[ASPIRESQL].[AspireDakotaTest].[dbo].[contract] c
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[contractEquipment] ce ON c.contractOID = ce.ContractOid
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Location] loc ON ce.BilltoLocationOid = loc.oid) AS celoc ON c.contractOID = celoc.contractOID
+	LEFT OUTER JOIN
+		(SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
+    	FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GenericField] GF 
+   		LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid LEFT OUTER JOIN
+   		[ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
+   		WHERE GF.oid = 23
+    	GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.contractOID = OppIDTable.contractOID
 WHERE
 	(chen.entt_OID <> 1) AND (r.descr <> 'Collector')) AS Source
-ON Target.EntityOID__C = Source.EntityOID__C
+ON Target.PhoneOID__c = Source.PhoneOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
+		Target.EntityOID__C = Source.EntityOID__C,
+		Target.Opportunity__c = Source.Opportunity__c,
 		Target.RoleType__c = Source.RoleType__c,
 		Target.Name__C = Source.Name__C,
 		Target.LegalName__c = Source.LegalName__c,
@@ -104,6 +115,7 @@ WHEN NOT MATCHED THEN
 		TaxLocation__c,
 		CEBillToLocation__c,
 		EmailAddress__c,
+		PhoneOID__c,
 		PhoneType__c,
 		PhoneNumber__c,
 		Extension__c,
@@ -123,6 +135,7 @@ WHEN NOT MATCHED THEN
 		Source.TaxLocation__c,
 		Source.CEBillToLocation__c,
 		Source.EmailAddress__c,
+		Source.PhoneOID__c,
 		Source.PhoneType__c,
 		Source.PhoneNumber__c,
 		Source.Extension__c,
