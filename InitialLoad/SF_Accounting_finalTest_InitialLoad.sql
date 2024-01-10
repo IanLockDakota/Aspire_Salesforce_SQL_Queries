@@ -29,7 +29,8 @@ Other Notes:
 /* Pulling all accounting data per contract */
 WITH CurrentDaySnapshot AS (
     SELECT GLAD.ContractOid, 
-        SUM(CASE WHEN (GL.AccountId = '01-10089') AND (GL.ProcessOid IN (20119, 20126, 20127, 20140, 20141, 20143)) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END) AS [Gross Receivable], 
+        SUM(CASE WHEN (GL.AccountId = '01-10089') AND (GL.ProcessOid IN (20119, 20126, 20127, 20140, 20141, 20143)) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END) AS [Gross Receivable],
+        ISNULL(SUM(CASE WHEN MyTable6.AccountId = '01-10089' AND MyTable6.ProcessOid IN (20119, 20126, 20127, 20140) THEN (ISNULL(MyTable6.Debit, 0) + ISNULL(MyTable6.Credit, 0)) END),0) AS [Original Gross Receivable], 
         SUM(CASE WHEN (GL.AccountId IN ('01-10089', '01-10090')) THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS [Balance Remaining], 
         SUM(CASE WHEN (GL.AccountId = '01-10092') THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * - 1 END) AS [Unearned Finance], 
         SUM(CASE WHEN (GL.AccountId = '01-10091') THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS Residual, 
@@ -46,7 +47,8 @@ WITH CurrentDaySnapshot AS (
 PreviousDaySnapshot AS (
 SELECT
 		Opportunity__c, 
-		ContractOid__c, 
+		ContractOid__c,
+        Original_Gross_Receivable__c, 
 		Gross_Receivable__c, 
 		Payments_Made__c, 
 		Balance_Remaining__c, 
@@ -276,6 +278,7 @@ Subquery AS (
         OppIDTable.opportunityID As opportunityID,
         CASE
             WHEN CurrentDay.[Gross Receivable] <> PreviousDay.[Gross_Receivable__c]
+                 OR CurrentDay.[Original Gross Receivable] <> PreviousDay.[Original_Gross_Receivable__c]
                  OR (CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining]) <> (PreviousDay.[Gross_Receivable__c] - PreviousDay.[Balance_Remaining__c])
                  OR CurrentDay.[Balance Remaining] <> PreviousDay.[Balance_Remaining__c]
                  OR CurrentDay.[Unearned Finance] <> PreviousDay.[Unearned_Finance__c]
@@ -287,6 +290,7 @@ Subquery AS (
             ELSE 'No Changes'
         END AS ChangeStatus,
         CurrentDay.[Gross Receivable] AS CurrentDay_GrossReceivable,
+        CurrentDay.[Original Gross Receivable] AS CurrentDay_OriginalGrossReceivable,
         CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining] AS CurrentDay_PaymentsMade,
         CurrentDay.[Balance Remaining] AS CurrentDay_BalanceRemaining,
         CurrentDay.[Unearned Finance] AS CurrentDay_UnearnedFinance,
@@ -327,6 +331,7 @@ NULL AS ID,
 sbq.contractOID AS ContractOid__c, 
 sbq.opportunityID AS Opportunity__c, 
 sbq.CurrentDay_GrossReceivable AS Gross_Receivable__c,
+sbq.CurrentDay_OriginalGrossReceivable AS Original_Gross_Receivable__c,
 sbq.CurrentDay_PaymentsMade AS Payments_Made__c, 
 sbq.CurrentDay_BalanceRemaining AS Balance_Remaining__c, 
 sbq.CurrentDay_UnearnedFinance AS Unearned_Finance__c, 
@@ -347,6 +352,7 @@ WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Gross_Receivable__c = Source.Gross_Receivable__c,
+        Target.Original_Gross_Receivable__c = Source.Original_Gross_Receivable__c,
         Target.Payments_Made__c = Source.Payments_Made__c,
         Target.Balance_Remaining__c = Source.Balance_Remaining__c,
         Target.Unearned_Finance__c = ISNULL(Source.Unearned_Finance__c,0),
@@ -367,6 +373,7 @@ WHEN NOT MATCHED THEN
         contractOID__c,
         Opportunity__c,
         Gross_Receivable__c,
+        Original_Gross_Receivable__c,
         Payments_Made__c,
         Balance_Remaining__c,
         Unearned_Finance__c,
@@ -385,6 +392,7 @@ WHEN NOT MATCHED THEN
         Source.contractOID,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
+        Source.Original_Gross_Receivable__c,
         Source.Payments_Made__c,
         Source.Balance_Remaining__c,
         ISNULL(Source.Unearned_Finance__c, 0),
