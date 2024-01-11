@@ -6,6 +6,7 @@ USING (SELECT DISTINCT
 	c.contractOID AS contractOID__c,
 	OppIDTable.opportunityID AS opportunity__c,
 	p.paymentOID AS paymentOID__c,
+    p.amount AS amount__c,
     p.LastChangeOperator AS PLastChangeOperator__c,
     p.LastChangeDateTime AS PLastChangeDatetime__c
 FROM 
@@ -25,19 +26,22 @@ ON Target.PaymentOID__c = Source.PaymentOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
-        Target.opportunity__c = Source.opportunity__c
+        Target.opportunity__c = Source.opportunity__c,
+        Target.amount__c = Source.amount__c
 
 WHEN NOT MATCHED THEN
     INSERT (
         ID,
         Opportunity__c,
         PaymentOID__c,
+        amount__c,
         PLastChangeOperator__c,
         PLastChangeDatetime__c
     ) VALUES (
         Source.ID,
         Source.Opportunity__c,
         Source.PaymentOID__c,
+        Source.amount__c,
         Source.PLastChangeOperator__c,
         Source.PLastChangeDatetime__c
     );
