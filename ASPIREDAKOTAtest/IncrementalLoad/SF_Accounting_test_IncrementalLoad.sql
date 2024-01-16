@@ -345,14 +345,14 @@ ISNULL(sbq.NI_at_Termination, 0) AS NI_at_Termination__c,
 ISNULL(sbq.DPD_at_Termination, 0) AS DPD_at_Termination__c,
 ISNULL(sbq.Payments_Made_At_Termination, 0) AS Payments_Made_At_Termination__c,
 ISNULL(sbq.Balance_Remaining_At_Termination, 0) AS Balance_Remaining_At_Termination__c
-FROM Subquery sbq) AS Source
+FROM Subquery sbq
+WHERE sbq.ChangeStatus = 'Data Changed') AS Source
 ON Target.contractOID__c = Source.contractOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Gross_Receivable__c = Source.Gross_Receivable__c,
-        Target.Original_Gross_Receivable__c = Source.Original_Gross_Receivable__c,
         Target.Payments_Made__c = Source.Payments_Made__c,
         Target.Balance_Remaining__c = Source.Balance_Remaining__c,
         Target.Unearned_Finance__c = ISNULL(Source.Unearned_Finance__c,0),
@@ -373,7 +373,6 @@ WHEN NOT MATCHED THEN
         contractOID__c,
         Opportunity__c,
         Gross_Receivable__c,
-        Original_Gross_Receivable__c,
         Payments_Made__c,
         Balance_Remaining__c,
         Unearned_Finance__c,
@@ -392,7 +391,6 @@ WHEN NOT MATCHED THEN
         Source.contractOID,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
-        Source.Original_Gross_Receivable__c,
         Source.Payments_Made__c,
         Source.Balance_Remaining__c,
         ISNULL(Source.Unearned_Finance__c, 0),

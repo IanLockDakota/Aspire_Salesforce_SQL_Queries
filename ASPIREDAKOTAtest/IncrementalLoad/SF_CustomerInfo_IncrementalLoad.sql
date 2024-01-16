@@ -1,3 +1,7 @@
+-- DATETIME VARIABLES
+DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
+DECLARE @end DATETIME = GETDATE()
+
 MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
@@ -19,7 +23,11 @@ USING (SELECT
 	ph.is_primary AS PrimaryPhone__c,
 	CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.CollectorOid END AS CollectorOID__c,
     CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE collector.name END AS CollectorName__c,
-    CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.PermanentCollectionAssignmentFlag END AS PermanentCollectionAssignmentFlag__c
+    CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.PermanentCollectionAssignmentFlag END AS PermanentCollectionAssignmentFlag__c,
+	e.LastchangeOperator AS entLastchangeOperator__c,
+	e.LastChangeDateTime AS entLastChangeDateTime__c,
+	ph.LastchangeOperator AS phLastchangeOperator__c,
+	ph.LastChangeDateTime AS phLastChangeDateTime__c
 FROM
 	[ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c
 	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[ChildEntity] chen ON chen.ref_oid = c.contractOID
@@ -80,7 +88,7 @@ FROM
    		WHERE GF.oid = 23
     	GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.contractOID = OppIDTable.contractOID
 WHERE
-	(chen.entt_OID <> 1) AND (r.descr <> 'Collector')) AS Source
+	(chen.entt_OID <> 1) AND (r.descr <> 'Collector') AND ((e.LastChangeDateTime BETWEEN @start AND @end) OR (p.LastChangeDateTime BETWEEN @start AND @end))) AS Source
 ON Target.PhoneOID__c = Source.PhoneOID__c
 
 WHEN MATCHED THEN
@@ -101,7 +109,11 @@ WHEN MATCHED THEN
 		Target.PrimaryPhone__c = Source.PrimaryPhone__c,
 		Target.CollectorOID__c = Source.CollectorOID__c,
 		Target.CollectorName__c = Source.CollectorName__c,
-		Target.PermanentCollectionAssignmentFlag__c = Source.PermanentCollectionAssignmentFlag__c
+		Target.PermanentCollectionAssignmentFlag__c = Source.PermanentCollectionAssignmentFlag__c,
+		Target.entLastchangeOperator__c = Source.entLastchangeOperator__c,
+		Target.entLastChangeDateTime__c = Source.entLastChangeDateTime__c,
+		Target.phLastchangeOperator__c = Source.phLastchangeOperator__c,
+		Target.phLastChangeDateTime__c = Source.phLastChangeDateTime__c
 
 WHEN NOT MATCHED THEN
     INSERT (
@@ -122,7 +134,12 @@ WHEN NOT MATCHED THEN
 		PrimaryPhone__c,
 		CollectorOID__c,
 		CollectorName__c,
-		PermanentCollectionAssignmentFlag__c
+		PermanentCollectionAssignmentFlag__c,
+		entLastchangeOperator__c,
+		entLastChangeDateTime__c,
+		phLastchangeOperator__c,
+		phLastChangeDateTime__c
+
 
     ) VALUES (
         Source.ID,
@@ -142,5 +159,9 @@ WHEN NOT MATCHED THEN
 		Source.PrimaryPhone__c,
 		Source.CollectorOID__c,
 		Source.CollectorName__c,
-		Source.PermanentCollectionAssignmentFlag__c
+		Source.PermanentCollectionAssignmentFlag__c,
+		Source.entLastchangeOperator__c,
+		Source.entLastChangeDateTime__c,
+		Source.phLastchangeOperator__c,
+		Source.phLastChangeDateTime__c
     );

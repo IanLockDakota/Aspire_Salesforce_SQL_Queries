@@ -4,8 +4,6 @@
 
 /*datetime start / python script for storing LastRunTime as @start?*/
 DECLARE @start DATETIME = DATEADD(DAY, -1, GETDATE())
-
-/*datetime end*/
 DECLARE @end DATETIME = GETDATE()
 
 MERGE INTO EFT_Assignment_ASPIRE__c_upsert AS Target

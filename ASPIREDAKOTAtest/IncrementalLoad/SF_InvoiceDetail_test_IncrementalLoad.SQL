@@ -32,6 +32,7 @@ C.ContractOID AS ContractOID__c,
 OppIDTable.opportunityID AS Opportunity__c,
 ID.InvoiceHeaderOid AS InvoiceHeaderOID__c, /* MISSING */
 ID.InvoiceDetailOid AS InvoiceDetailOID__c,
+ID.InvoiceDetailOid AS Name,
 ID.OpenClosedOID AS PaymentMethodOID__c,
 LTVI.data_value AS InvoicePaymentMethod__c, /* MISSING */
 ID.TransactionCodeOID AS TransactionCode__C,
@@ -42,7 +43,7 @@ IH.InvoiceDate AS InvoiceDate__C, /* MISSING */
 IH.DueDate AS DueDate__c,
 ID.IsPaid AS IsPaid__C, /* MISSING */
 ID.LastChangeOperator AS LastChangeOperator__c, /* MISSING */
-ID.LastChangeDateTime AS LastChangeDatetime__c /* MISSING */
+ID.LastChangeDateTime  AS LastChangeDatetime__c /* MISSING */
 
 
 FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C LEFT OUTER JOIN 
@@ -70,6 +71,7 @@ ON Target.InvoiceDetailOID__c = Source.InvoiceDetailOID__c
 WHEN MATCHED THEN
     UPDATE SET
         Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c,
+        Target.Name = Source.Name,
         Target.InvoicePaymentMethod__c = Source.InvoicePaymentMethod__c,
         Target.PaymentMethodOID__c = Source.PaymentMethodOID__c,
         Target.TransactionCode__C = Source.TransactionCode__C,
@@ -88,6 +90,7 @@ WHEN NOT MATCHED THEN
         Opportunity__c,
         InvoiceHeaderOID__c,
         InvoiceDetailOID__c,
+        Name,
         PaymentMethodOID__c,
         InvoicePaymentMethod__c,
         TransactionCode__C,
@@ -104,6 +107,8 @@ WHEN NOT MATCHED THEN
         Source.Opportunity__c,
         Source.InvoiceHeaderOID__c, 
         Source.InvoiceDetailOID__c,
+        Source.Name,
+        Source.PaymentMethodOID__c,
         Source.InvoicePaymentMethod__c,
         Source.TransactionCode__C,
         Source.Description__c,

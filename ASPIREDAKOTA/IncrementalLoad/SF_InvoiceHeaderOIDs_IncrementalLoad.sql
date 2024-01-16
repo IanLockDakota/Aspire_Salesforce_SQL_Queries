@@ -8,23 +8,23 @@ USING (SELECT DISTINCT
     NULL AS ID,
 	c.contractOID AS contractOID__c,
 	OppIDTable.opportunityID AS opportunity__c,
-	p.paymentOID AS paymentOID__c,
-    p.LastChangeOperator AS PLastChangeOperator__c,
-    p.LastChangeDateTime AS PLastChangeDatetime__c
+	IH.InvoiceHeaderOID AS InvoiceHeaderOID__c,
+    IH.LastChangeOperator AS IHLastChangeOperator__c,
+    IH.LastChangeDateTime AS IHLastChangeDatetime__c
 FROM 
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C 
-	LEFT OUTER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[Payment] P ON c.contractOID = p.contractOID
-    LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[Contract] C 
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[InvoiceHeader] IH ON c.ContractOid = IH.ContractOid
+	LEFT OUTER JOIN 
 	 (SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-                                  FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GenericField] GF 
+                                  FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
                                   LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid LEFT OUTER JOIN
-                                  [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
+                                  [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
                                   WHERE GF.oid = 23
                                   GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
                                 ) AS OppIDTable ON c.ContractOid = OppIDTable.ref_oid
-    WHERE
-	p.paymentOID IS NOT NULL AND (p.LastChangeDateTime BETWEEN @start and @end)) AS Source
-ON Target.PaymentOID__c = Source.PaymentOID__c
+WHERE
+	IH.InvoiceHeaderOID IS NOT NULL AND (IH.LastChangeDateTime BETWEEN @start and @end)) AS Source
+ON Target.InvoiceHeaderOID__c = Source.InvoiceHeaderOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
@@ -34,13 +34,15 @@ WHEN NOT MATCHED THEN
     INSERT (
         ID,
         Opportunity__c,
+        InvoiceHeaderOID__c,
         PaymentOID__c,
-        PLastChangeOperator__c,
-        PLastChangeDatetime__c
+        IHLastChangeOperator__c,
+        IHLastChangeDatetime__c
     ) VALUES (
         Source.ID,
         Source.Opportunity__c,
+        Source.InvoiceHeaderOID__c,
         Source.PaymentOID__c,
-        Source.PLastChangeOperator__c,
-        Source.PLastChangeDatetime__c
+        Source.IHLastChangeOperator__c,
+        Source.IHLastChangeDatetime__c
     );

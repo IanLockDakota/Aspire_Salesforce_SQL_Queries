@@ -57,9 +57,9 @@ FROM
         Com.LastChangeOperator, 
         Com.LastChangeDateTime
     FROM
-        [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Contract] Con LEFT OUTER JOIN
-        [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Entity] Ent ON Con.EntityOid = Ent.oid RIGHT OUTER JOIN
-        [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Comment] Com ON Con.ContractOid = Com.ref_oid
+        [ASPIRESQL].[AspireDakota].[dbo].[Contract] Con LEFT OUTER JOIN
+        [ASPIRESQL].[AspireDakota].[dbo].[Entity] Ent ON Con.EntityOid = Ent.oid RIGHT OUTER JOIN
+        [ASPIRESQL].[AspireDakota].[dbo].[Comment] Com ON Con.ContractOid = Com.ref_oid
     WHERE
     	(com.text IS NOT NULL)
 	    AND (com.ref_type <> 'ACCT')
@@ -104,8 +104,8 @@ FROM
 			Comment_1.LastChangeOperator, 
 			Comment_1.LastChangeDateTime
 		FROM
-        [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Entity] AS Entity_1
-        LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Comment] AS Comment_1 ON Entity_1.oid = Comment_1.ref_oid 
+        [ASPIRESQL].[AspireDakota].[dbo].[Entity] AS Entity_1
+        LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Comment] AS Comment_1 ON Entity_1.oid = Comment_1.ref_oid 
         LEFT OUTER JOIN (
             SELECT
                 co1.contractID,
@@ -114,9 +114,9 @@ FROM
                 ct.StartDate,
                 co1.TerminationDate
             FROM
-                [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Entity] e1
-                LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
-                INNER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
+                [ASPIRESQL].[AspireDakota].[dbo].[Entity] e1
+                LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
+                INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
         ) AS conCheck ON entity_1.oid = conCheck.oid
         WHERE
             (Comment_1.text IS NOT NULL)
@@ -166,8 +166,8 @@ FROM (
         Comment_1.LastChangeOperator, 
         Comment_1.LastChangeDateTime
     FROM
-        [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Entity] AS Entity_1
-        LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Comment] AS Comment_1 ON Entity_1.oid = Comment_1.ref_oid 
+        [ASPIRESQL].[AspireDakota].[dbo].[Entity] AS Entity_1
+        LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Comment] AS Comment_1 ON Entity_1.oid = Comment_1.ref_oid 
         LEFT OUTER JOIN (
             SELECT
                 co1.contractID,
@@ -176,9 +176,9 @@ FROM (
                 ct.StartDate,
                 co1.TerminationDate
             FROM
-                [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Entity] e1
-                LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
-                INNER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
+                [ASPIRESQL].[AspireDakota].[dbo].[Entity] e1
+                LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
+                INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
         ) AS conCheck ON entity_1.oid = conCheck.oid
     WHERE
         (Comment_1.text IS NOT NULL)
@@ -200,13 +200,13 @@ GROUP BY
     LastChangeDateTime) as d LEFT OUTER JOIN
 
     (SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-    FROM [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[GenericField] GF 
+    FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
     LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid
-    LEFT OUTER JOIN [ASPIRESQL].[ASPIREDakotaTEST].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
     WHERE GF.oid = 23
     GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON d.ContractOid = OppIDTable.ContractOID
     WHERE (d.LastChangeDateTime BETWEEN @start and @end)) AS Source
-ON Target.CommentOID__c = Source.CommentOID__c -- Add any additional conditions for matching records
+    ON Target.CommentOID__c = Source.CommentOID__c -- Add any additional conditions for matching records
 
 WHEN MATCHED THEN
     UPDATE SET

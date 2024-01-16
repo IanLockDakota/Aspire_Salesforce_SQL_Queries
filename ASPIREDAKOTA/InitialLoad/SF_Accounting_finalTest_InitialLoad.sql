@@ -29,15 +29,16 @@ Other Notes:
 /* Pulling all accounting data per contract */
 WITH CurrentDaySnapshot AS (
     SELECT GLAD.ContractOid, 
-        SUM(CASE WHEN (GL.AccountId = '01-10089') AND (GL.ProcessOid IN (20119, 20126, 20127, 20140, 20141, 20143)) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END) AS [Gross Receivable], 
+        SUM(CASE WHEN (GL.AccountId = '01-10089') AND (GL.ProcessOid IN (20119, 20126, 20127, 20140, 20141, 20143)) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END) AS [Gross Receivable],
+        ISNULL(SUM(CASE WHEN GL.AccountId = '01-10089' AND GL.ProcessOid IN (20119, 20126, 20127, 20140) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END),0) AS [Original Gross Receivable], 
         SUM(CASE WHEN (GL.AccountId IN ('01-10089', '01-10090')) THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS [Balance Remaining], 
         SUM(CASE WHEN (GL.AccountId = '01-10092') THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * - 1 END) AS [Unearned Finance], 
         SUM(CASE WHEN (GL.AccountId = '01-10091') THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS Residual, 
         SUM(CASE WHEN (GL.AccountId = '01-10093') THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * - 1 END) AS [Deferred Residual], 
         SUM(CASE WHEN (GL.AccountId = '01-10094') THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS [Deferred Expense], 
         SUM(CASE WHEN (GL.AccountId = '01-10130') THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * - 1 END) AS [Security Deposit]
-        FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedger] GL INNER JOIN
-            [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedgerAccountID] GLAD ON GL.GeneralLedgerAccountIdOid = GLAD.GeneralLedgerAccountIdOid
+        FROM [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedger] GL INNER JOIN
+            [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedgerAccountID] GLAD ON GL.GeneralLedgerAccountIdOid = GLAD.GeneralLedgerAccountIdOid
             WHERE        (GL.PostDate <= GETDATE())
             GROUP BY GLAD.ContractOid
 ),
@@ -46,7 +47,8 @@ WITH CurrentDaySnapshot AS (
 PreviousDaySnapshot AS (
 SELECT
 		Opportunity__c, 
-		ContractOid__c, 
+		ContractOid__c,
+        Original_Gross_Receivable__c, 
 		Gross_Receivable__c, 
 		Payments_Made__c, 
 		Balance_Remaining__c, 
@@ -62,9 +64,9 @@ SELECT
 /* Pulling Oppurtunity ID */
 OppIDTable AS (
     SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-    FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GenericField] GF 
+    FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
     LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid LEFT OUTER JOIN
-    [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
+    [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
     WHERE GF.oid = 23
     GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
 ),
@@ -99,10 +101,10 @@ NetInvest AS (SELECT GLA.ContractOid,
                     WHEN GL.AccountId = '01-10130'
                     THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * -1
                 END) AS [Security Deposit]
-        FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedger] GL
-                INNER JOIN [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedgerAccountId] GLA
+        FROM [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedger] GL
+                INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedgerAccountId] GLA
                             ON GL.GeneralLedgerAccountIdOid = GLA.GeneralLedgerAccountIdOid INNER JOIN
-                                [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C on GLA.ContractOid = c.ContractOid
+                                [ASPIRESQL].[AspireDakota].[dbo].[Contract] C on GLA.ContractOid = c.ContractOid
         WHERE (GL.PostDate <= GETDATE()) AND (c.IsTerminated = 0)
         GROUP BY GLA.ContractOid),
 
@@ -118,7 +120,7 @@ NetInvestTerm AS (SELECT
     + ISNULL(Mytable2.[Deferred Expense], 0)
     - ISNULL(Mytable2.[Security Deposit], 0)) * -1) AS [Net Investment]
 FROM
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[contract] c2 LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[contract] c2 LEFT OUTER JOIN
 (SELECT
 		C1.contractOID,
 		ISNULL(SUM(CASE WHEN (MyTable.AccountId IN ('01-10089', '01-10090')) THEN ISNULL(MyTable.Debit, 0) + ISNULL(MyTable.Credit, 0) END),0) AS [Balance Remaining], 
@@ -128,10 +130,10 @@ FROM
 		ISNULL(SUM(CASE WHEN (MyTable.AccountId = '01-10094') THEN ISNULL(MyTable.Debit, 0) + ISNULL(MyTable.Credit, 0) END),0) AS [Deferred Expense], 
 		ISNULL(SUM(CASE WHEN (MyTable.AccountId = '01-10130') THEN (ISNULL(MyTable.Debit, 0) + ISNULL(MyTable.Credit, 0)) END),0) * -1 AS [Security Deposit]
 	FROM
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[CONTRACT] C1 LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[CONTRACT] C1 LEFT OUTER JOIN
 	(SELECT GLAD2.ContractOid, GL3.GeneralLedgerOid, GL3.CreatedDateTime, GL3.ProcessOid, GL3.BatchIdentifier, GL3.HeaderIdentifier, GL3.PostDate, GL3.AccountId, GL3.AccountTypeOid, GL3.EffectiveDate, GL3.JournalNumber, GL3.Credit, GL3.Debit
-	FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedger] GL3 LEFT OUTER JOIN
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedgerAccountID] GLAD2 ON GL3.GeneralLedgerAccountIdOid = GLAD2.GeneralLedgerAccountIdOid
+	FROM [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedger] GL3 LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[GeneralLedgerAccountID] GLAD2 ON GL3.GeneralLedgerAccountIdOid = GLAD2.GeneralLedgerAccountIdOid
 	WHERE ProcessOid = 20143) as MyTable ON c1.contractOID = myTable.ContractOid
 	WHERE (C1.IsBooked = 1) AND (C1.CompanyOid = 1) AND (C1.IsTerminated = 1)
 	GROUP BY C1.ContractOid) as Mytable2 ON c2.contractOID = mytable2.contractOID LEFT OUTER JOIN
@@ -139,10 +141,10 @@ FROM
 		C5.contractOID,
         ISNULL(SUM(CASE WHEN MyTable6.AccountId = '01-10089' AND MyTable6.ProcessOid IN (20119, 20126, 20127, 20140, 20141) THEN (ISNULL(MyTable6.Debit, 0) + ISNULL(MyTable6.Credit, 0)) END),0) AS [Gross Receivable]
 	FROM
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[CONTRACT] C5 LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[CONTRACT] C5 LEFT OUTER JOIN
 	(SELECT GLAD2.ContractOid, GL3.GeneralLedgerOid, GL3.CreatedDateTime, GL3.ProcessOid, GL3.BatchIdentifier, GL3.HeaderIdentifier, GL3.PostDate, GL3.AccountId, GL3.AccountTypeOid, GL3.EffectiveDate, GL3.JournalNumber, GL3.Credit, GL3.Debit
-	FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedger] GL3 LEFT OUTER JOIN
-	[ASPIRESQL].[AspireDakotaTest].[dbo].[GeneralLedgerAccountID] GLAD2 ON GL3.GeneralLedgerAccountIdOid = GLAD2.GeneralLedgerAccountIdOid) as MyTable6 ON c5.contractOID = myTable6.ContractOid
+	FROM [ASPIRESQL].[AspireDakota].[dbo].[GeneralLedger] GL3 LEFT OUTER JOIN
+	[ASPIRESQL].[AspireDakota].[dbo].[GeneralLedgerAccountID] GLAD2 ON GL3.GeneralLedgerAccountIdOid = GLAD2.GeneralLedgerAccountIdOid) as MyTable6 ON c5.contractOID = myTable6.ContractOid
 	WHERE (C5.IsBooked = 1) AND (C5.CompanyOid = 1) AND (C5.IsTerminated = 1)
 	GROUP BY C5.ContractOid) as Mytable7 ON c2.contractOID = mytable7.contractOID
 	WHERE (c2.IsBooked = 1) AND (c2.CompanyOid = 1) AND (c2.IsTerminated = 1)),
@@ -160,7 +162,7 @@ DPD AS (SELECT
             ( SELECT        
                     contr.ContractOid, 
                     MIN(DueDate) AS OldestRentDue
-                FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] contr LEFT OUTER JOIN
+                FROM [ASPIRESQL].[AspireDakota].[dbo].[Contract] contr LEFT OUTER JOIN
                     (
                         SELECT        
                             InvAmountDuebyInvoice_1.ContractOid, 
@@ -176,7 +178,7 @@ DPD AS (SELECT
                                     DueDate, 
                                     InvoiceHeaderOid
                                 FROM            
-                                    [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] AS InvoiceDetail_1
+                                    [ASPIRESQL].[AspireDakota].[dbo].[InvoiceDetail] AS InvoiceDetail_1
                                 WHERE        
                                     (DueDate <= GETDATE()) 
                                     AND (TransactionCodeOid IN (1, 35, 25, 37, 43)) 
@@ -191,9 +193,9 @@ DPD AS (SELECT
                                     SUM(InvoicePaymentHistory_1.AppliedAmount) AS PaymentAmount, 
                                     InvoiceDetail_5.InvoiceHeaderOid
                                 FROM            
-                                    [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoicePaymentHistory] AS InvoicePaymentHistory_1 
+                                    [ASPIRESQL].[AspireDakota].[dbo].[InvoicePaymentHistory] AS InvoicePaymentHistory_1 
                                 RIGHT OUTER JOIN
-                                    [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] AS InvoiceDetail_5 
+                                    [ASPIRESQL].[AspireDakota].[dbo].[InvoiceDetail] AS InvoiceDetail_5 
                                     ON InvoicePaymentHistory_1.InvoiceDetailOid = InvoiceDetail_5.InvoiceDetailOid
                                 WHERE        
                                     (InvoicePaymentHistory_1.AppliedDate <= GETDATE()) 
@@ -210,7 +212,7 @@ DPD AS (SELECT
                             (RemainingDue > 0) AND (contr.IsTerminated = 0)
                         GROUP BY 
                             contr.ContractOid) AS OldRentDueDtTERM INNER JOIN
-                    [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C ON c.contractOID = OldRentDueDtTERM.ContractOid),
+                    [ASPIRESQL].[AspireDakota].[dbo].[Contract] C ON c.contractOID = OldRentDueDtTERM.ContractOid),
 
 /* Days past due at term */
 DPDTerm AS (SELECT        
@@ -225,7 +227,7 @@ DPDTerm AS (SELECT
             ( SELECT        
                     con.ContractOid, 
                     MIN(DueDate) AS OldestRentDue
-                FROM [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] con LEFT OUTER JOIN
+                FROM [ASPIRESQL].[AspireDakota].[dbo].[Contract] con LEFT OUTER JOIN
                     (
                         SELECT        
                             InvAmountDuebyInvoice_1.ContractOid, 
@@ -240,8 +242,8 @@ DPDTerm AS (SELECT
                             InvoiceDetail_1.DueDate, 
                             InvoiceDetail_1.InvoiceHeaderOid
                             FROM            
-                                [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] AS InvoiceDetail_1 INNER JOIN
-                                [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C on InvoiceDetail_1.ContractOID = c.ContractOID
+                                [ASPIRESQL].[AspireDakota].[dbo].[InvoiceDetail] AS InvoiceDetail_1 INNER JOIN
+                                [ASPIRESQL].[AspireDakota].[dbo].[Contract] C on InvoiceDetail_1.ContractOID = c.ContractOID
                             WHERE        
                                 (InvoiceDetail_1.DueDate <= GETDATE()) 
                                 AND (InvoiceDetail_1.TransactionCodeOid IN (1, 35, 25, 37, 43)) 
@@ -254,8 +256,8 @@ DPDTerm AS (SELECT
                                 SUM(InvoicePaymentHistory_1.AppliedAmount) AS PaymentAmount, 
                                 InvoiceDetail_5.InvoiceHeaderOid
                                 FROM            
-                                    [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoicePaymentHistory] AS InvoicePaymentHistory_1 RIGHT OUTER JOIN
-                                    [ASPIRESQL].[AspireDakotaTest].[dbo].[InvoiceDetail] AS InvoiceDetail_5 ON InvoicePaymentHistory_1.InvoiceDetailOid = InvoiceDetail_5.InvoiceDetailOid
+                                    [ASPIRESQL].[AspireDakota].[dbo].[InvoicePaymentHistory] AS InvoicePaymentHistory_1 RIGHT OUTER JOIN
+                                    [ASPIRESQL].[AspireDakota].[dbo].[InvoiceDetail] AS InvoiceDetail_5 ON InvoicePaymentHistory_1.InvoiceDetailOid = InvoiceDetail_5.InvoiceDetailOid
                                 WHERE        
                                     (InvoicePaymentHistory_1.AppliedDate <= GETDATE()) 
                                     AND (InvoiceDetail_5.TransactionCodeOid IN (1, 35, 25, 37, 43)) 
@@ -268,7 +270,7 @@ DPDTerm AS (SELECT
                             (RemainingDue > 0) AND (con.IsTerminated = 1)
                         GROUP BY 
                             con.ContractOid) AS OldRentDueDtTERM INNER JOIN
-                    [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C ON c.contractOID = OldRentDueDtTERM.ContractOid),
+                    [ASPIRESQL].[AspireDakota].[dbo].[Contract] C ON c.contractOID = OldRentDueDtTERM.ContractOid),
 
 Subquery AS (
     SELECT        
@@ -276,17 +278,19 @@ Subquery AS (
         OppIDTable.opportunityID As opportunityID,
         CASE
             WHEN CurrentDay.[Gross Receivable] <> PreviousDay.[Gross_Receivable__c]
-                 OR (CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining]) <> (PreviousDay.[Gross_Receivable__c] - PreviousDay.[Balance_Remaining__c])
-                 OR CurrentDay.[Balance Remaining] <> PreviousDay.[Balance_Remaining__c]
-                 OR CurrentDay.[Unearned Finance] <> PreviousDay.[Unearned_Finance__c]
-                 OR CurrentDay.Residual <> PreviousDay.Residual__c
-                 OR CurrentDay.[Deferred Residual] <> PreviousDay.[Deferred_Residual__c]
-                 OR CurrentDay.[Deferred Expense] <> PreviousDay.[Deferred_Expense__c]
-                 OR CurrentDay.[Security Deposit] <> PreviousDay.[Security_Deposit__c]
+            OR CurrentDay.[Original Gross Receivable] <> PreviousDay.[Original_Gross_Receivable__c]
+            OR (CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining]) <> (PreviousDay.[Gross_Receivable__c] - PreviousDay.[Balance_Remaining__c])
+            OR CurrentDay.[Balance Remaining] <> PreviousDay.[Balance_Remaining__c]
+            OR CurrentDay.[Unearned Finance] <> PreviousDay.[Unearned_Finance__c]
+            OR CurrentDay.Residual <> PreviousDay.Residual__c
+            OR CurrentDay.[Deferred Residual] <> PreviousDay.[Deferred_Residual__c]
+            OR CurrentDay.[Deferred Expense] <> PreviousDay.[Deferred_Expense__c]
+            OR CurrentDay.[Security Deposit] <> PreviousDay.[Security_Deposit__c]
             THEN 'Data Changed'
             ELSE 'No Changes'
         END AS ChangeStatus,
         CurrentDay.[Gross Receivable] AS CurrentDay_GrossReceivable,
+        CurrentDay.[Original Gross Receivable] AS CurrentDay_OriginalGrossReceivable,
         CurrentDay.[Gross Receivable] - CurrentDay.[Balance Remaining] AS CurrentDay_PaymentsMade,
         CurrentDay.[Balance Remaining] AS CurrentDay_BalanceRemaining,
         CurrentDay.[Unearned Finance] AS CurrentDay_UnearnedFinance,
@@ -301,7 +305,7 @@ Subquery AS (
         ISNULL(NetInvestTerm.[Balance Remaining at Term]*-1,0) AS Balance_Remaining_At_Termination,
         ISNULL(CASE WHEN DPDTerm.DPD IS NULL AND c.IsTerminated = 1 THEN 0 ELSE DPDTerm.DPD END,'') AS DPD_at_Termination
     FROM 
-        [ASPIRESQL].[AspireDakotaTest].[dbo].[Contract] C
+        [ASPIRESQL].[AspireDakota].[dbo].[Contract] C
     LEFT OUTER JOIN
         CurrentDaySnapshot AS CurrentDay ON c.ContractOid = CurrentDay.ContractOid
     LEFT OUTER JOIN
@@ -327,6 +331,7 @@ NULL AS ID,
 sbq.contractOID AS ContractOid__c, 
 sbq.opportunityID AS Opportunity__c, 
 sbq.CurrentDay_GrossReceivable AS Gross_Receivable__c,
+sbq.CurrentDay_OriginalGrossReceivable AS Original_Gross_Receivable__c,
 sbq.CurrentDay_PaymentsMade AS Payments_Made__c, 
 sbq.CurrentDay_BalanceRemaining AS Balance_Remaining__c, 
 sbq.CurrentDay_UnearnedFinance AS Unearned_Finance__c, 
@@ -340,14 +345,14 @@ ISNULL(sbq.NI_at_Termination, 0) AS NI_at_Termination__c,
 ISNULL(sbq.DPD_at_Termination, 0) AS DPD_at_Termination__c,
 ISNULL(sbq.Payments_Made_At_Termination, 0) AS Payments_Made_At_Termination__c,
 ISNULL(sbq.Balance_Remaining_At_Termination, 0) AS Balance_Remaining_At_Termination__c
-FROM Subquery sbq
-WHERE sbq.ChangeStatus = 'Data Changed') AS Source
+FROM Subquery sbq) AS Source
 ON Target.contractOID__c = Source.contractOID__c
 
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Gross_Receivable__c = Source.Gross_Receivable__c,
+        Target.Original_Gross_Receivable__c = Source.Original_Gross_Receivable__c,
         Target.Payments_Made__c = Source.Payments_Made__c,
         Target.Balance_Remaining__c = Source.Balance_Remaining__c,
         Target.Unearned_Finance__c = ISNULL(Source.Unearned_Finance__c,0),
@@ -368,6 +373,7 @@ WHEN NOT MATCHED THEN
         contractOID__c,
         Opportunity__c,
         Gross_Receivable__c,
+        Original_Gross_Receivable__c,
         Payments_Made__c,
         Balance_Remaining__c,
         Unearned_Finance__c,
@@ -386,6 +392,7 @@ WHEN NOT MATCHED THEN
         Source.contractOID,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
+        Source.Original_Gross_Receivable__c,
         Source.Payments_Made__c,
         Source.Balance_Remaining__c,
         ISNULL(Source.Unearned_Finance__c, 0),

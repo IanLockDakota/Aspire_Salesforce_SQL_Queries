@@ -27,7 +27,9 @@ ON Target.PaymentOID__c = Source.PaymentOID__c
 WHEN MATCHED THEN
     UPDATE SET
         Target.opportunity__c = Source.opportunity__c,
-        Target.amount__c = Source.amount__c
+        Target.amount__c = Source.amount__c,
+        Target.PLastChangeOperator__c = Source.PLastChangeOperator__c,
+        Target.PLastChangeDatetime__c = Source.PLastChangeDatetime__c
 
 WHEN NOT MATCHED THEN
     INSERT (
