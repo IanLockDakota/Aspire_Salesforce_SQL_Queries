@@ -6,7 +6,7 @@ MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
 	c.contractOID AS ContractOID__C,
-	OppIDTable.Opportunity AS Opportunity__c,
+	OppIDTable.OpportunityID AS Opportunity__c,
 	chen.entt_oid AS EntityOID__C, 
 	r.descr AS RoleType__c,
 	e.name AS Name__C,
@@ -88,7 +88,7 @@ FROM
    		WHERE GF.oid = 23
     	GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.contractOID = OppIDTable.contractOID
 WHERE
-	(chen.entt_OID <> 1) AND (r.descr <> 'Collector') AND ((e.LastChangeDateTime BETWEEN @start AND @end) OR (p.LastChangeDateTime BETWEEN @start AND @end))) AS Source
+	(chen.entt_OID <> 1) AND (r.descr <> 'Collector') AND ((e.LastChangeDateTime BETWEEN @start AND @end) OR (ph.LastChangeDateTime BETWEEN @start AND @end))) AS Source
 ON Target.PhoneOID__c = Source.PhoneOID__c
 
 WHEN MATCHED THEN
