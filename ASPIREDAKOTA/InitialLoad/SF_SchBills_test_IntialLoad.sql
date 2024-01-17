@@ -140,24 +140,24 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
 				LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[paymentStream] ps ON rb.ScheduleDefinitionOid = ps.ScheduleDefinitionOid
                 LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStreamContractItem] psci ON ps.PaymentStreamOid = psci.PaymentStreamOid) AS lcdt ON rb.RecurringBillableOid = lcdt.RecurringBillableOid
                 LEFT OUTER JOIN (SELECT DISTINCT
-                                    ps.scheduledefinitionOID,
+                                    ps.ScheduleDefinitionOid,
                                     ps.Frequency,
                                     lti.descr
                                 FROM
                                     [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream] ps
                                     LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[LTIValues] lti ON ps.Frequency = lti.data_value
                                 WHERE 
-                                    lti.table_key = 'PYMT_FREQUENCY') as freq ON rb.scheduleDefintionOID = freq.scheduleDefintionOID
+                                    lti.table_key = 'PYMT_FREQUENCY') as freq ON rb.ScheduleDefinitionOid = freq.ScheduleDefinitionOid
     WHERE
         (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (rb.contractOID IS NOT NULL)
-    ) AS Source ON Target.RecurringBillableOid__c = Source.RecurringBillableOid__c
+    ) AS Source ON Target.ScheduleDefinitionOID__C = Source.ScheduleDefinitionOID__C
 
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Invoicedescription__c = Source.Invoicedescription__c,
         Target.Description__c = Source.Description__c,
-        Target.ScheduleDefinitionOID__C = Source.ScheduleDefinitionOID__C,
+        Target.RecurringBillableOid__c = Source.RecurringBillableOid__c,
         Target.IsFollowingRent__C = Source.IsFollowingRent__C,
         Target.IsCombinedWithRent__c = Source.IsCombinedWithRent__c,
         Target.IsProcessAsEFT__c = Source.IsProcessAsEFT__c,

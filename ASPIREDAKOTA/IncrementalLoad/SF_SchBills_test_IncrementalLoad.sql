@@ -3,7 +3,7 @@ DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
 DECLARE @end DATETIME = GETDATE()
 
 MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
-        SELECT DISTINCT
+                SELECT DISTINCT
         NULL AS ID,
         OppIDTable.OpportunityID AS Opportunity__c,
         rb.contractOID AS contractOID__C, 
@@ -49,16 +49,16 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
         rb.LastChangeOperator AS LastChangeOperator__c,
 		lcdt.GreatestLastchangeDateTime AS LastChangeDateTime__c
     FROM
-        Contract c
-        LEFT OUTER JOIN RecurringBillable rb ON c.contractOID = rb.ContractOid
-        LEFT OUTER JOIN PaymentStream ps ON rb.ScheduleDefinitionOID = ps.ScheduleDefinitionOID
-        LEFT OUTER JOIN TransactionCode TC ON rb.transactioncodeOID = tc.transactioncodeOID
+       [ASPIRESQL].[AspireDakota].[dbo].[Contract] c
+        LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[RecurringBillable] rb ON c.contractOID = rb.ContractOid
+        LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream] ps ON rb.ScheduleDefinitionOID = ps.ScheduleDefinitionOID
+        LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[TransactionCode] TC ON rb.transactioncodeOID = tc.transactioncodeOID
         LEFT OUTER JOIN (
             SELECT 
                 ContractOid,
                 ScheduleDefinitionOid,
                 MIN(startDate) AS startDate
-            FROM PaymentStream
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
             WHERE isInvoiced = 1
             GROUP BY ContractOid,
                 ScheduleDefinitionOid
@@ -68,7 +68,7 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
                 ContractOid,
                 ScheduleDefinitionOid,
                 MAX(startDate) AS nextDate
-            FROM PaymentStream
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
             WHERE isInvoiced = 0
             GROUP BY ContractOid,
                 ScheduleDefinitionOid
@@ -78,8 +78,8 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
                 rb.ScheduleDefinitionOID, 
                 SUM(CASE WHEN ps.isInvoiced = 1 THEN ps.Occurrences ELSE 0 END) AS isInvoicedOccurrences,
                 SUM(CASE WHEN ps.isInvoiced = 0 THEN ps.Occurrences ELSE 0 END) AS unInvoicedOccurrences
-            FROM RecurringBillable rb
-            LEFT OUTER JOIN PaymentStream ps ON rb.ScheduleDefinitionOID = ps.ScheduleDefinitionOID
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[RecurringBillable] rb
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream] ps ON rb.ScheduleDefinitionOID = ps.ScheduleDefinitionOID
             GROUP BY rb.ScheduleDefinitionOID
         ) AS invoiceCount ON rb.ScheduleDefinitionOid = invoiceCount.ScheduleDefinitionOid
         LEFT OUTER JOIN (
@@ -88,8 +88,8 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
                 MAX(psci.Amount) AS Amount, 
                 MAX(psci.OnStreamTaxAmount) AS TaxAmount,
                 MAX(psci.Amount) + MAX(psci.OnStreamTaxAmount) AS TotalAmount
-            FROM PaymentStream ps
-            LEFT OUTER JOIN PaymentStreamContractItem psci ON psci.paymentStreamOID = ps.PaymentStreamOid
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream] ps
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStreamContractItem] psci ON psci.paymentStreamOID = ps.PaymentStreamOid
             GROUP BY ps.ScheduleDefinitionOid
         ) AS amt ON rb.ScheduleDefinitionOID = amt.ScheduleDefinitionOid
         LEFT OUTER JOIN (
@@ -110,8 +110,8 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
                     psci.onStreamTaxAmount,
                     (SUM(paymentStream.Occurrences) * psci.amount) AS TotalAmountDue,
                     (SUM(paymentStream.Occurrences) * psci.onStreamTaxAmount) AS TotalTaxAmountDue
-                FROM paymentStream
-                LEFT OUTER JOIN PaymentStreamContractItem psci ON paymentStream.PaymentStreamOid = psci.PaymentStreamOid
+                FROM [ASPIRESQL].[AspireDakota].[dbo].[paymentStream]
+                LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStreamContractItem] psci ON paymentStream.PaymentStreamOid = psci.PaymentStreamOid
                 GROUP BY paymentStream.ScheduleDefinitionOid, 
                     paymentStream.PaymentStreamOid, 
                     paymentStream.Occurrences, 
@@ -123,9 +123,9 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
         ) AS totals ON rb.ScheduleDefinitionOID = totals.ScheduleDefinitionOid
         LEFT OUTER JOIN
            (SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-            FROM GenericField GF 
-            LEFT OUTER JOIN cdataGenericValue GV ON GF.oid = GV.genf_oid 
-            LEFT OUTER JOIN Contract c ON c.ContractOid = GV.ref_oid
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid 
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = GV.ref_oid
             WHERE GF.oid = 23
             GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIdTable ON rb.contractOID = OppIDTable.contractOID
 		LEFT OUTER JOIN
@@ -140,28 +140,28 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
 				ps.LastChangeDateTime AS pslcdt,
 				psci.LastChangeDateTime AS pscilcdt
 			FROM 
-				RecurringBillable rb
-				LEFT OUTER JOIN paymentStream ps ON rb.ScheduleDefinitionOid = ps.ScheduleDefinitionOid
-                LEFT OUTER JOIN PaymentStreamContractItem psci ON ps.PaymentStreamOid = psci.PaymentStreamOid) AS lcdt ON rb.RecurringBillableOid = lcdt.RecurringBillableOid
+				[ASPIRESQL].[AspireDakota].[dbo].[RecurringBillable] rb
+				LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[paymentStream] ps ON rb.ScheduleDefinitionOid = ps.ScheduleDefinitionOid
+                LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[PaymentStreamContractItem] psci ON ps.PaymentStreamOid = psci.PaymentStreamOid) AS lcdt ON rb.RecurringBillableOid = lcdt.RecurringBillableOid
                 LEFT OUTER JOIN (SELECT DISTINCT
-                                    ps.scheduledefinitionOID,
+                                    ps.ScheduleDefinitionOid,
                                     ps.Frequency,
                                     lti.descr
                                 FROM
-                                    PaymentStream ps
-                                    LEFT OUTER JOIN LTIValues lti ON ps.Frequency = lti.data_value
+                                    [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream] ps
+                                    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[LTIValues] lti ON ps.Frequency = lti.data_value
                                 WHERE 
-                                    lti.table_key = 'PYMT_FREQUENCY') as freq ON rb.scheduleDefintionOID = freq.scheduleDefintionOID
+                                    lti.table_key = 'PYMT_FREQUENCY') as freq ON rb.ScheduleDefinitionOid = freq.ScheduleDefinitionOid
     WHERE
         (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (rb.contractOID IS NOT NULL) AND (lcdt.GreatestLastchangeDateTime BETWEEN @start AND @end)
-    ) AS Source ON Target.RecurringBillableOid__c = Source.RecurringBillableOid__c
+    ) AS Source ON Target.ScheduleDefinitionOID__C = Source.ScheduleDefinitionOID__C
 
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Invoicedescription__c = Source.Invoicedescription__c,
         Target.Description__c = Source.Description__c,
-        Target.ScheduleDefinitionOID__C = Source.ScheduleDefinitionOID__C,
+        Target.RecurringBillableOid__c = Source.RecurringBillableOid__c,
         Target.IsFollowingRent__C = Source.IsFollowingRent__C,
         Target.IsCombinedWithRent__c = Source.IsCombinedWithRent__c,
         Target.IsProcessAsEFT__c = Source.IsProcessAsEFT__c,
