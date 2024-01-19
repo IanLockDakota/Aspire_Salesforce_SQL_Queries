@@ -30,7 +30,7 @@ Other Notes:
 WITH CurrentDaySnapshot AS (
     SELECT GLAD.ContractOid, 
         SUM(CASE WHEN (GL.AccountId = '01-10089') AND (GL.ProcessOid IN (20119, 20126, 20127, 20140, 20141, 20143)) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END) AS [Gross Receivable],
-        ISNULL(SUM(CASE WHEN MyTable6.AccountId = '01-10089' AND MyTable6.ProcessOid IN (20119, 20126, 20127, 20140) THEN (ISNULL(MyTable6.Debit, 0) + ISNULL(MyTable6.Credit, 0)) END),0) AS [Original Gross Receivable], 
+        ISNULL(SUM(CASE WHEN GL.AccountId = '01-10089' AND GL.ProcessOid IN (20119, 20126, 20127, 20140) THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) END),0) AS [Original Gross Receivable], 
         SUM(CASE WHEN (GL.AccountId IN ('01-10089', '01-10090')) THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS [Balance Remaining], 
         SUM(CASE WHEN (GL.AccountId = '01-10092') THEN (ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0)) * - 1 END) AS [Unearned Finance], 
         SUM(CASE WHEN (GL.AccountId = '01-10091') THEN ISNULL(GL.Debit, 0) + ISNULL(GL.Credit, 0) END) AS Residual, 
@@ -388,7 +388,7 @@ WHEN NOT MATCHED THEN
         Balance_Remaining_At_termination__C
     ) VALUES (
         Source.ID,
-        Source.contractOID,
+        Source.contractOID__c,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
         Source.Payments_Made__c,

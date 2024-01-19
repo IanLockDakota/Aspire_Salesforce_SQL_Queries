@@ -389,7 +389,7 @@ WHEN NOT MATCHED THEN
         Balance_Remaining_At_termination__C
     ) VALUES (
         Source.ID,
-        Source.contractOID,
+        Source.contractOID__c,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
         Source.Original_Gross_Receivable__c,

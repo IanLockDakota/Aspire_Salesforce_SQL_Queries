@@ -2,7 +2,7 @@ MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
 	c.contractOID AS ContractOID__C,
-	OppIDTable.Opportunity AS Opportunity__c,
+	OppIDTable.OpportunityID AS Opportunity__c,
 	chen.entt_oid AS EntityOID__C, 
 	r.descr AS RoleType__c,
 	e.name AS Name__C,
