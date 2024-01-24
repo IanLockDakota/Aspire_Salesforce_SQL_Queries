@@ -43,6 +43,7 @@ USING (
         P.EffectiveDate AS EffectiveDate__c,
         P.IsPosted AS IsPosted__c,
         P.IsReturned AS IsReturned__c,
+        crh.Description AS Description__c,
         CRD.LastChangeOperator AS CRDLastChangeOperator__c,
         CRD.LastChangeDateTime AS CRDLastChangeDateTime__c,
         P.LastChangeDateTime AS PaymentLastChangeDateTime__c
@@ -84,6 +85,7 @@ WHEN MATCHED THEN
         Target.EffectiveDate__c = Source.EffectiveDate__c,
         Target.IsPosted__c = Source.IsPosted__c,
         Target.IsReturned__c = Source.IsReturned__c,
+        Target.Description__c = Source.Description__c,
         Target.CRDLastChangeOperator__c = Source.CRDLastChangeOperator__c,
         Target.CRDLastChangeDateTime__c = Source.CRDLastChangeDateTime__c,
         Target.PaymentLastChangeDateTime__c = Source.PaymentLastChangeDateTime__c
@@ -103,6 +105,7 @@ WHEN NOT MATCHED THEN
         EffectiveDate__c,
         IsPosted__c,
         IsReturned__c,
+        Description__c,
         CRDLastChangeOperator__c,
         CRDLastChangeDateTime__c,
         PaymentLastChangeDateTime__c
@@ -120,6 +123,7 @@ WHEN NOT MATCHED THEN
         Source.EffectiveDate__c,
         Source.IsPosted__c,
         Source.IsReturned__c,
+        Source.description__c,
         Source.CRDLastChangeOperator__c,
         Source.CRDLastChangeDateTime__c,
         Source.PaymentLastChangeDateTime__c

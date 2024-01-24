@@ -1,6 +1,7 @@
 MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
+	CONCAT(c.contractOID, chen.entt_oid) AS UniqueID__C,
 	c.contractOID AS ContractOID__C,
 	OppIDTable.OpportunityID AS Opportunity__c,
 	chen.entt_oid AS EntityOID__C, 
@@ -8,22 +9,23 @@ USING (SELECT
 	e.name AS Name__C,
 	e.legal_name AS LegalName__c,
 	e.alt_name AS AltName__c,
+	e.email_addr AS EmailAddress__c,
 	cbtlloc.FullAddress AS BillToLocation__c,
 	ctxloc.FullAddress AS TaxLocation__c,
 	celoc.FullAddress AS CEBillToLocation__c,
-	e.email_addr AS EmailAddress__c,
-	ph.OID AS PhoneOID__c,
-	ISNULL(ph.phone_type, NULL) AS PhoneType__c,
-	ISNULL(ph.phone_num, NULL) AS PhoneNumber__c,
-	ISNULL(ph.extension, NULL) AS Extension__c,
-	ph.is_primary AS PrimaryPhone__c,
 	CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.CollectorOid END AS CollectorOID__c,
     CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE collector.name END AS CollectorName__c,
     CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.PermanentCollectionAssignmentFlag END AS PermanentCollectionAssignmentFlag__c,
-	e.LastchangeOperator AS entLastchangeOperator__c,
-	e.LastChangeDateTime AS entLastChangeDateTime__c,
-	ph.LastchangeOperator AS phLastchangeOperator__c,
-	ph.LastChangeDateTime AS phLastChangeDateTime__c
+	CASE
+        WHEN e.LastChangeDateTime >= cbtlloc.LastChangeDateTime AND e.LastChangeDateTime >= celoc.LastChangeDateTime THEN e.LastChangeDateTime
+        WHEN cbtlloc.LastChangeDateTime >= e.LastChangeDateTime AND cbtlloc.LastChangeDateTime >= celoc.LastChangeDateTime THEN cbtlloc.LastChangeDateTime
+        ELSE celoc.LastChangeDateTime
+    END AS LastChangeDateTime__c,
+	CASE
+        WHEN e.LastChangeDateTime >= cbtlloc.LastChangeDateTime AND e.LastChangeDateTime >= celoc.LastChangeDateTime THEN e.LastChangeOperator
+        WHEN cbtlloc.LastChangeDateTime >= e.LastChangeDateTime AND cbtlloc.LastChangeDateTime >= celoc.LastChangeDateTime THEN cbtlloc.LastChangeOperator
+        ELSE celoc.LastChangeOperator
+    END AS LastChangeOperator__c
 FROM
 	[ASPIRESQL].[AspireDakota].[dbo].[Contract] c
 	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ChildEntity] chen ON chen.ref_oid = c.contractOID
@@ -38,7 +40,6 @@ FROM
 			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Entity] e2 ON e.collectorOID = e2.oid
 		WHERE
 			e2.name IS NOT NULL) AS collector ON e.collectorOID = collector.CollectorOid
-	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Phone] ph ON chen.entt_oid = ph.entt_oid
 	LEFT OUTER JOIN
 		(SELECT 
 			c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
@@ -54,7 +55,9 @@ FROM
 		(SELECT DISTINCT
 			c.contractOID,
 			c.BillToLocationOid,
-			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress
+			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress,
+            c.LastChangeDateTime,
+			c.LastChangeOperator
 		FROM
 			[ASPIRESQL].[AspireDakota].[dbo].[contract] c
 			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[contractEquipment] ce ON c.contractOID = ce.ContractOid
@@ -71,7 +74,9 @@ FROM
 		(SELECT DISTINCT
 			c.contractOID,
 			ce.BilltoLocationOid AS ceBillToLocationOID,
-			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress
+			CONCAT(loc.addr_line1, ISNULL(loc.addr_line2, ''), ', ', loc.city, ', ', loc.state, ' ', loc.postal_code) AS FullAddress,
+            ce.LastChangeDateTime,
+			ce.LastChangeOperator
 		FROM
 			[ASPIRESQL].[AspireDakota].[dbo].[contract] c
 			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[contractEquipment] ce ON c.contractOID = ce.ContractOid

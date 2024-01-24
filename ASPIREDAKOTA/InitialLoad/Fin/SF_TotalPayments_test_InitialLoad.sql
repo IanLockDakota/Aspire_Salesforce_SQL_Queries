@@ -45,8 +45,7 @@ USING (SELECT
     InvoicedPymnts.LastChangeOperator AS LastChangeOperator__c
 FROM
     [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] LEFT OUTER JOIN
-    (
-        SELECT
+    (SELECT
             PaymentStream.ContractTermOid,
             SUM(PaymentStream.Occurrences) AS TtlSchPymts
         FROM
@@ -54,39 +53,53 @@ FROM
         GROUP BY
             PaymentStream.ContractTermOid
     ) AS TtlPayStream ON ContractTerm.ContractTermOid = TtlPayStream.ContractTermOid
-INNER JOIN
-    [ASPIRESQL].[AspireDakota].[dbo].[Contract] ON ContractTerm.ContractOid = Contract.ContractOid INNER JOIN
-    (
-        SELECT
-            PaymentStream.ContractTermOid,
-            MIN(PaymentStream.Startdate) as startDate,
-            SUM(PaymentStream.Occurrences) AS TtlSchPymts,
-            LastChangeDateTime,
-            LastChangeOperator
-        FROM
-            [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
-        WHERE
-            (isInvoiced = 1) AND (ContractTermOID IS NOT NULL)
-        GROUP BY
-            PaymentStream.ContractTermOid, LastChangeDateTime, LastChangeOperator
-    ) AS InvoicedPymnts ON ContractTerm.ContractTermOID = InvoicedPymnts.ContractTermOID
-INNER JOIN
-    (
-        SELECT
-            PaymentStream.ContractTermOid,
-            MAX(PaymentStream.Startdate) as startDate,
-            SUM(PaymentStream.Occurrences) AS TtlSchPymts,
-            LastChangeDateTime,
-            LastChangeOperator
-        FROM
-            [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
-        WHERE
-            (isInvoiced = 0) AND (ContractTermOID IS NOT NULL)
-        GROUP BY
-            PaymentStream.ContractTermOid, LastChangeDateTime, LastChangeOperator
-    ) AS UnInvoicedPymnts ON ContractTerm.ContractTermOID = UnInvoicedPymnts.ContractTermOID INNER JOIN
-    (
-        SELECT
+    INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] ON ContractTerm.ContractOid = Contract.ContractOid 
+    INNER JOIN
+    (SELECT
+        inv.ContractTermOid,
+        MIN(inv.startDate) as startDate,
+        SUM(inv.TtlSchPymts) as TtlSchPymts,
+        MAX(inv.LastChangeDateTime) as LastChangeDateTime,
+        MAX(inv.LastChangeOperator) as LastChangeOperator
+    FROM
+                (SELECT
+                    PaymentStream.ContractTermOid,
+                    MIN(PaymentStream.Startdate) as startDate,
+                    SUM(PaymentStream.Occurrences) AS TtlSchPymts,
+                    LastChangeDateTime,
+                    LastChangeOperator
+                FROM
+                    [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
+                WHERE
+                    (isInvoiced = 1) AND (ContractTermOID IS NOT NULL)
+                GROUP BY
+                    PaymentStream.ContractTermOid, LastChangeDateTime, LastChangeOperator) as inv
+    GROUP BY
+        inv.ContractTermOid) AS InvoicedPymnts ON ContractTerm.ContractTermOID = InvoicedPymnts.ContractTermOID
+    INNER JOIN
+    (SELECT
+        uninv.ContractTermOid,
+        MIN(uninv.startDate) as startDate,
+        SUM(uninv.TtlSchPymts) as TtlSchPymts,
+        MAX(uninv.LastChangeDateTime) as LastChangeDateTime,
+        MAX(uninv.LastChangeOperator) as LastChangeOperator
+    FROM
+                (SELECT
+                    PaymentStream.ContractTermOid,
+                    MAX(PaymentStream.Startdate) as startDate,
+                    SUM(PaymentStream.Occurrences) AS TtlSchPymts,
+                    LastChangeDateTime,
+                    LastChangeOperator
+                FROM
+                    [ASPIRESQL].[AspireDakota].[dbo].[PaymentStream]
+                WHERE
+                    (isInvoiced = 0) AND (ContractTermOID IS NOT NULL)
+                GROUP BY
+                    PaymentStream.ContractTermOid, LastChangeDateTime, LastChangeOperator) as uninv
+    GROUP BY
+        uninv.ContractTermOid) AS UnInvoicedPymnts ON ContractTerm.ContractTermOID = UnInvoicedPymnts.ContractTermOID 
+    INNER JOIN
+    (SELECT
             c.ContractOID,
             GV.ref_oid,
             GF.descr,
@@ -100,8 +113,7 @@ INNER JOIN
         WHERE
             GF.oid = 23
         GROUP BY
-            c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
-    ) AS OppIDTable ON OppIDTable.contractOid = Contract.contractOID
+            c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON OppIDTable.contractOid = Contract.contractOID
 WHERE
     (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1)) AS Source
 ON Target.ContractOID__c = Source.ContractOID__c

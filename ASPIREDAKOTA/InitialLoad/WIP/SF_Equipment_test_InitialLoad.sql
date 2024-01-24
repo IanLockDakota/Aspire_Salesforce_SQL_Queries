@@ -1,5 +1,5 @@
 /*
-Name: NetInvestment
+Name: Equipment
 
 ASPIRE SQLS Table Dependencies:
     - Contract
@@ -26,20 +26,14 @@ SF Object Dependencies:
 Last change: 12/5/2023
 
 Other Notes:
-    - I believe termatDPD is the only field that needs to be added.
+    - 
 */
-
--- DATETIME VARIABLES
-DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
-DECLARE @end DATETIME = GETDATE()
-
 MERGE INTO Equipment_ASPIRE__c_upsert AS Target
 USING (SELECT
     NULL AS ID,
     c.ContractOID AS ContractOID__C,
     OppIDTable.opportunityID AS Opportunity__c,
     eid.EquipmentOID AS EquipmentOID__c,
-    /*eid.EquipmentIDOID AS EquipmentIDOID__c,*/
     eid.serialnumber AS SerialNumber__c,
 	CONCAT(ISNULL((NULLIF(el.addr_line1,' ') + ', '),''),ISNULL((NULLIF(el.addr_line2,' ') + ', '),''),ISNULL((NULLIF(el.addr_line3,' ') + ', '),''),el.city, ', ', el.state) as EquipmentLocation__c,
 	CASE 
@@ -115,18 +109,17 @@ FROM
                             WHERE GF.oid = 23
                             GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
                         ) AS OppIDTable ON c.ContractOid = OppIDTable.ContractOID LEFT OUTER JOIN
-                        (SELECT cda.contractOID, cda.contractitemOID, cda.disposaltype, cda.disposalamount, cda.invoicedetailOid, id.duedate, iph.PostDate, MAX(iph.AppliedDate) as AppliedDate
+                        (SELECT cda.contractOID, cda.contractitemOID, cda.disposaltype, cda.disposalamount, cda.invoicedetailOid, MAX(id.duedate) AS DueDate, MAX(iph.PostDate) as PostDate, MAX(iph.AppliedDate) as AppliedDate
                             FROM [ASPIRESQL].[AspireDakota].[dbo].[ContractDisposedAsset] cda LEFT OUTER JOIN
                             [ASPIRESQL].[AspireDakota].[dbo].[InvoiceDetail] ID on cda.InvoiceDetailOid = id.InvoiceDetailOid LEFT OUTER JOIN
                             [ASPIRESQL].[AspireDakota].[dbo].[InvoicePaymentHistory] iph on id.InvoiceDetailOid = iph.InvoiceDetailOid
                             GROUP BY cda.contractOID, cda.contractitemOID, cda.disposaltype, cda.disposalamount, 
-                            cda.invoicedetailOid, id.duedate, iph.PostDate) AS Equipfin ON cda.ContractItemOid = Equipfin.contractitemOID
+                            cda.invoicedetailOid) AS Equipfin ON cda.ContractItemOid = Equipfin.contractitemOID
 WHERE
 	(c.CompanyOid = 1) 
     AND (c.IsBooked = 1)
 	AND (el.rownum = 1)
-	AND (ci.ContractItemTypeOid = 1)
-    AND (ce.LastChangeDateTime BETWEEN @start AND @end))  AS Source
+	AND (ci.ContractItemTypeOid = 1))  AS Source
 ON Target.EquipmentOID__c = Source.EquipmentOID__c
 
 
@@ -183,3 +176,4 @@ WHEN NOT MATCHED THEN
         Source.ceLastChangeOperator__c,
         Source.ceLastChangeDateTime__c
     );
+
