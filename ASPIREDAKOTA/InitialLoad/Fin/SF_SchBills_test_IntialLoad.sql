@@ -149,7 +149,7 @@ MERGE INTO Scheduled_Billables_ASPIRE__c_upsert AS Target USING (
                                 WHERE 
                                     lti.table_key = 'PYMT_FREQUENCY') as freq ON rb.ScheduleDefinitionOid = freq.ScheduleDefinitionOid
     WHERE
-        (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (rb.contractOID IS NOT NULL)
+        (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (rb.contractOID IS NOT NULL) AND (OppIDTable.OpportunityID IS NOT NULL)
     ) AS Source ON Target.ScheduleDefinitionOID__C = Source.ScheduleDefinitionOID__C
 
 WHEN MATCHED THEN

@@ -1,7 +1,11 @@
+-- DATETIME VARIABLES
+DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
+DECLARE @end DATETIME = GETDATE()
+
 MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
-	CONCAT(c.contractOID, chen.entt_oid) AS UniqueID__C,
+	CONCAT(c.contractOID, chen.entt_oid, LEFT(r.descr,1)) AS UniqueID__C,
 	c.contractOID AS ContractOID__C,
 	OppIDTable.OpportunityID AS Opportunity__c,
 	chen.entt_oid AS EntityOID__C, 
@@ -80,7 +84,9 @@ FROM
 		FROM
 			[ASPIRESQL].[AspireDakota].[dbo].[contract] c
 			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[contractEquipment] ce ON c.contractOID = ce.ContractOid
-			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Location] loc ON ce.BilltoLocationOid = loc.oid) AS celoc ON c.contractOID = celoc.contractOID
+			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Location] loc ON ce.BilltoLocationOid = loc.oid
+        WHERE
+			ce.IsPrimaryforPricing = 1) AS celoc ON c.contractOID = celoc.contractOID
 	LEFT OUTER JOIN
 		(SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
     	FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
@@ -89,8 +95,8 @@ FROM
    		WHERE GF.oid = 23
     	GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.contractOID = OppIDTable.contractOID
 WHERE
-	(chen.entt_OID <> 1) AND (r.descr <> 'Collector')) AS Source
-ON Target.PhoneOID__c = Source.PhoneOID__c
+	(chen.entt_OID <> 1) AND (r.descr NOT IN ('Collector', 'Broker', 'Contract Manager')) AND ((e.LastChangeDateTime BETWEEN @start and @end) OR (cbtlloc.LastChangeDateTime BETWEEN @start and @end) OR (celoc.LastChangeDateTime BETWEEN @start and @end))) AS Source
+ON Target.UniqueID__C = Source.UniqueID__C
 
 WHEN MATCHED THEN
     UPDATE SET
@@ -104,65 +110,48 @@ WHEN MATCHED THEN
 		Target.TaxLocation__c = Source.TaxLocation__c,
 		Target.CEBillToLocation__c = Source.CEBillToLocation__c,
 		Target.EmailAddress__c = Source.EmailAddress__c,
-		Target.PhoneType__c = Source.PhoneType__c,
-		Target.PhoneNumber__c = Source.PhoneNumber__c,
-		Target.Extension__c = Source.Extension__c,
-		Target.PrimaryPhone__c = Source.PrimaryPhone__c,
 		Target.CollectorOID__c = Source.CollectorOID__c,
 		Target.CollectorName__c = Source.CollectorName__c,
 		Target.PermanentCollectionAssignmentFlag__c = Source.PermanentCollectionAssignmentFlag__c,
-		Target.entLastchangeOperator__c = Source.entLastchangeOperator__c,
-		Target.entLastChangeDateTime__c = Source.entLastChangeDateTime__c,
-		Target.phLastchangeOperator__c = Source.phLastchangeOperator__c,
-		Target.phLastChangeDateTime__c = Source.phLastChangeDateTime__c
+		Target.LastChangeOperator__c = Source.LastChangeOperator__c,
+		Target.LastChangeDateTime__c = Source.LastChangeDateTime__c
 
 WHEN NOT MATCHED THEN
     INSERT (
-        ID,
-       	EntityOID__C,
-		RoleType__c,
-		Name__C,
-		LegalName__c,
-		AltName__c,
-		BillToLocation__c,
-		TaxLocation__c,
-		CEBillToLocation__c,
-		EmailAddress__c,
-		PhoneOID__c,
-		PhoneType__c,
-		PhoneNumber__c,
-		Extension__c,
-		PrimaryPhone__c,
-		CollectorOID__c,
-		CollectorName__c,
-		PermanentCollectionAssignmentFlag__c,
-		entLastchangeOperator__c,
-		entLastChangeDateTime__c,
-		phLastchangeOperator__c,
-		phLastChangeDateTime__c
-
+        ID, 
+		UniqueID__C, 
+		Opportunity__c, 
+		EntityOID__C , 
+		RoleType__c, 
+		Name__C, 
+		LegalName__c, 
+		AltName__c, 
+		EmailAddress__c, 
+		BillToLocation__c, 
+		TaxLocation__c, 
+		CEBillToLocation__c, 
+		CollectorOID__c, 
+		CollectorName__c, 
+		PermanentCollectionAssignmentFlag__c, 
+		LastChangeDateTime__c, 
+		LastChangeOperator__c
 
     ) VALUES (
-        Source.ID,
-       	Source.EntityOID__C,
-		Source.RoleType__c,
-		Source.Name__C,
-		Source.LegalName__c,
-		Source.AltName__c,
-		Source.BillToLocation__c,
-		Source.TaxLocation__c,
-		Source.CEBillToLocation__c,
-		Source.EmailAddress__c,
-		Source.PhoneOID__c,
-		Source.PhoneType__c,
-		Source.PhoneNumber__c,
-		Source.Extension__c,
-		Source.PrimaryPhone__c,
-		Source.CollectorOID__c,
-		Source.CollectorName__c,
-		Source.PermanentCollectionAssignmentFlag__c,
-		Source.entLastchangeOperator__c,
-		Source.entLastChangeDateTime__c,
-		Source.phLastchangeOperator__c,
-		Source.phLastChangeDateTime__c
+        Source.ID, 
+		Source.UniqueID__C, 
+		Source.Opportunity__c, 
+		Source.EntityOID__C , 
+		Source.RoleType__c, 
+		Source.Name__C, 
+		Source.LegalName__c, 
+		Source.AltName__c, 
+		Source.EmailAddress__c, 
+		Source.BillToLocation__c, 
+		Source.TaxLocation__c, 
+		Source.CEBillToLocation__c, 
+		Source.CollectorOID__c, 
+		Source.CollectorName__c, 
+		Source.PermanentCollectionAssignmentFlag__c, 
+		Source.LastChangeDateTime__c, 
+		Source.LastChangeOperator__c
     );

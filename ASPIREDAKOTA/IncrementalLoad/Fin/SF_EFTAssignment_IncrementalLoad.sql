@@ -32,7 +32,7 @@ FROM            [ASPIRESQL].[AspireDakota].[dbo].[AchBankAccount] INNER JOIN
                                   WHERE GF.oid = 23
                                   GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
                                 ) AS OppIDTable ON contract.ContractOid = OppIDTable.ref_oid
-WHERE        (Contract.IsBooked = 1) AND (Contract.CompanyOid = 1) AND (ContractEFT.LastChangeDateTime BETWEEN @start AND @end)) AS Source
+WHERE        (Contract.IsBooked = 1) AND (Contract.CompanyOid = 1) AND (ContractEFT.LastChangeDateTime BETWEEN @start AND @end) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 ON Target.ContractEFTOid__c = Source.ContractEFTOid__c -- Add any additional conditions for matching records
 
 WHEN MATCHED THEN

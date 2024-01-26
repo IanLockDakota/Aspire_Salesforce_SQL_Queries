@@ -118,7 +118,7 @@ FROM
         GROUP BY
             c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON OppIDTable.contractOid = Contract.contractOID
 WHERE
-    (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1) AND (InvoicedPymnts.LastChangeDateTime BETWEEN @start and @end)) AS Source
+    (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1) AND (InvoicedPymnts.LastChangeDateTime BETWEEN @start and @end) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 ON Target.ContractOID__c = Source.ContractOID__c
 
 /*Upsert capabilities*/

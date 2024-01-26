@@ -321,7 +321,7 @@ Subquery AS (
     LEFT OUTER JOIN
         DPDTerm ON C.ContractOid = DPDTerm.ContractOid
     WHERE
-        (C.IsBooked = 1) AND (C.CompanyOid = 1)) 
+        (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (OppIDTable.opportunityID IS NOT NULL)) 
 
 
 MERGE INTO Accounting_ASPIRE__c_upsert AS Target

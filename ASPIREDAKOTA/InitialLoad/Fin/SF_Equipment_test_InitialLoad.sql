@@ -119,7 +119,9 @@ WHERE
 	(c.CompanyOid = 1) 
     AND (c.IsBooked = 1)
 	AND (el.rownum = 1)
-	AND (ci.ContractItemTypeOid = 1))  AS Source
+	AND (ci.ContractItemTypeOid = 1)
+    AND (c.ContractId NOT LIKE '%R%')
+    AND (OppIDTable.opportunityID IS NOT NULL))  AS Source
 ON Target.EquipmentOID__c = Source.EquipmentOID__c
 
 

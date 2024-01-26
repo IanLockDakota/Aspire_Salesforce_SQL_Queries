@@ -125,7 +125,9 @@ WHERE
     AND (c.IsBooked = 1)
 	AND (el.rownum = 1)
 	AND (ci.ContractItemTypeOid = 1)
-    AND (ce.LastChangeDateTime BETWEEN @start AND @end))  AS Source
+    AND (c.ContractId NOT LIKE '%R%')
+    AND (ce.LastChangeDateTime BETWEEN @start AND @end)
+    AND (OppIDTable.opportunityID IS NOT NULL))  AS Source
 ON Target.EquipmentOID__c = Source.EquipmentOID__c
 
 

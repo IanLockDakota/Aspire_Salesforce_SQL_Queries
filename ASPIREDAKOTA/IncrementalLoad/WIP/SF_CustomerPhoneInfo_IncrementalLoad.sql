@@ -1,3 +1,7 @@
+-- DATETIME VARIABLES
+DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
+DECLARE @end DATETIME = GETDATE()
+
 MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,

@@ -205,7 +205,7 @@ GROUP BY
     LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
     WHERE GF.oid = 23
     GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON d.ContractOid = OppIDTable.ContractOID
-    WHERE (d.LastChangeDateTime BETWEEN @start and @end)) AS Source
+    WHERE (d.LastChangeDateTime BETWEEN @start and @end) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
     ON Target.CommentOID__c = Source.CommentOID__c -- Add any additional conditions for matching records
 
 WHEN MATCHED THEN
