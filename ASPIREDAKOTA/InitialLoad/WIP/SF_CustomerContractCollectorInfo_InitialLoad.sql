@@ -13,9 +13,6 @@ USING (SELECT
 	cbtlloc.FullAddress AS BillToLocation__c,
 	ctxloc.FullAddress AS TaxLocation__c,
 	celoc.FullAddress AS CEBillToLocation__c,
-	CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.CollectorOid END AS CollectorOID__c,
-    CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE collector.name END AS CollectorName__c,
-    CASE WHEN r.descr = 'Guarantor' THEN NULL ELSE e.PermanentCollectionAssignmentFlag END AS PermanentCollectionAssignmentFlag__c,
 	CASE
         WHEN e.LastChangeDateTime >= cbtlloc.LastChangeDateTime AND e.LastChangeDateTime >= celoc.LastChangeDateTime THEN e.LastChangeDateTime
         WHEN cbtlloc.LastChangeDateTime >= e.LastChangeDateTime AND cbtlloc.LastChangeDateTime >= celoc.LastChangeDateTime THEN cbtlloc.LastChangeDateTime
@@ -40,17 +37,6 @@ FROM
 			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Entity] e2 ON e.collectorOID = e2.oid
 		WHERE
 			e2.name IS NOT NULL) AS collector ON e.collectorOID = collector.CollectorOid
-	LEFT OUTER JOIN
-		(SELECT 
-			c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-		FROM 
-			[ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
-			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid 
-			LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
-		WHERE 
-			GF.oid = 23
-		GROUP BY 
-			c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppID ON c.contractOID = OppID.ContractOid
 	LEFT OUTER JOIN
 		(SELECT DISTINCT
 			c.contractOID,
@@ -91,7 +77,7 @@ FROM
    		WHERE GF.oid = 23
     	GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.contractOID = OppIDTable.contractOID
 WHERE
-	(chen.entt_OID <> 1) AND (r.descr NOT IN ('Collector', 'Broker', 'Contract Manager'))) AS Source
+	(chen.entt_OID <> 1) AND (r.descr NOT IN ('Collector', 'Broker', 'Contract Manager')) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 ON Target.UniqueID__C = Source.UniqueID__C
 
 WHEN MATCHED THEN
@@ -106,9 +92,6 @@ WHEN MATCHED THEN
 		Target.TaxLocation__c = Source.TaxLocation__c,
 		Target.CEBillToLocation__c = Source.CEBillToLocation__c,
 		Target.EmailAddress__c = Source.EmailAddress__c,
-		Target.CollectorOID__c = Source.CollectorOID__c,
-		Target.CollectorName__c = Source.CollectorName__c,
-		Target.PermanentCollectionAssignmentFlag__c = Source.PermanentCollectionAssignmentFlag__c,
 		Target.LastChangeOperator__c = Source.LastChangeOperator__c,
 		Target.LastChangeDateTime__c = Source.LastChangeDateTime__c
 
@@ -125,9 +108,6 @@ WHEN NOT MATCHED THEN
 		EmailAddress__c, 
 		BillToLocation__c, 
 		TaxLocation__c, 
-		CEBillToLocation__c, 
-		CollectorOID__c, 
-		CollectorName__c, 
 		PermanentCollectionAssignmentFlag__c, 
 		LastChangeDateTime__c, 
 		LastChangeOperator__c
@@ -145,9 +125,6 @@ WHEN NOT MATCHED THEN
 		Source.BillToLocation__c, 
 		Source.TaxLocation__c, 
 		Source.CEBillToLocation__c, 
-		Source.CollectorOID__c, 
-		Source.CollectorName__c, 
-		Source.PermanentCollectionAssignmentFlag__c, 
 		Source.LastChangeDateTime__c, 
 		Source.LastChangeOperator__c
     );
