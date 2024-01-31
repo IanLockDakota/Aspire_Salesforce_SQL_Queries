@@ -32,12 +32,9 @@ USING (SELECT
     InvoicedPymnts.TtlSchPymts as InvPymtsAmount__c,
     UnInvoicedPymnts.TtlSchPymts AS UninvPymtsAmount__c,
     InvoicedPymnts.startDate AS FirstPayment__c,
-    CASE
-		WHEN UnInvoicedPymnts.startDate > GETDATE() THEN InvoicedPymnts.startDate
-		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) > 0 AND MONTH(UnInvoicedPymnts.startDate) = 12 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()) + 1, 1, DAY(UnInvoicedPymnts.startDate)))
-		WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) > 0 THEN DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), DAY(UnInvoicedPymnts.startDate))
-        WHEN UnInvoicedPymnts.startDate <= GETDATE() AND contract.isTerminated = 0 AND DATEDIFF(DAY,DAY(GETDATE()),DAY(UnInvoicedPymnts.startDate)) < 0 THEN DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), DAY(UnInvoicedPymnts.startDate)))
-        WHEN UnInvoicedPymnts.startDate < GETDATE() AND contract.isTerminated = 1 THEN NULL
+    CASE 
+		WHEN contract.isTerminated = 1 THEN NULL
+		WHEN contract.isTerminated = 0 THEN UninvoicedPymnts.startDate
 		ELSE NULL
 	END AS NextPayment__c,
     ContractTerm.MaturityDate AS MaturityDate__c,
@@ -115,7 +112,7 @@ FROM
         GROUP BY
             c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON OppIDTable.contractOid = Contract.contractOID
 WHERE
-    (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1) AND (OppIDTable.OpportunityID IS NOT NULL)) AS Source
+    (Contract.isTerminated = 0) AND (Contract.CompanyOid = 1) AND (Contract.IsBooked = 1) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 ON Target.ContractOID__c = Source.ContractOID__c
 
 /*Upsert capabilities*/

@@ -59,7 +59,7 @@ FROM            [ASPIRESQL].[AspireDakota].[dbo].[AchBankAccount] ABA INNER JOIN
                                 ) AS OppIDTable ON c.ContractOid = OppIDTable.ref_oid
 
 /*below is where datetime comparison is done*/
-WHERE (C.CompanyOID = 1) AND (C.IsBooked = 1) AND (NOT (EFTS.EftScheduleOid IS NULL)) AND (NOT EFTB.description LIKE '%ATA%') AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
+WHERE (c.isTerminated = 0) AND (C.CompanyOID = 1) AND (C.IsBooked = 1) AND (NOT (EFTS.EftScheduleOid IS NULL)) AND (NOT EFTB.description LIKE '%ATA%') AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 ON Target.EftScheduleOid__c = Source.EftScheduleOid__c
 
 /*Upsert capabilities*/

@@ -68,7 +68,7 @@ USING (
         GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
     ) AS OppIDTable ON C.ContractOid = OppIDTable.ref_oid
 
-    WHERE (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
+    WHERE (c.isTerminated = 0) AND (C.IsBooked = 1) AND (C.CompanyOid = 1) AND (P.IsPosted = 1) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
 
 ON Target.CashReceiptDetailOID__c = Source.CashReceiptDetailOID__c
 

@@ -63,6 +63,7 @@ FROM
     WHERE
     	(com.text IS NOT NULL)
 	    AND (com.ref_type <> 'ACCT')
+        AND (con.isTerminated = 0)
 
     UNION ALL
     
@@ -117,6 +118,8 @@ FROM
                 [ASPIRESQL].[AspireDakota].[dbo].[Entity] e1
                 LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
                 INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
+            WHERE
+                (co1.isTerminated = 0)
         ) AS conCheck ON entity_1.oid = conCheck.oid
         WHERE
             (Comment_1.text IS NOT NULL)
@@ -179,6 +182,8 @@ FROM (
                 [ASPIRESQL].[AspireDakota].[dbo].[Entity] e1
                 LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] co1 ON e1.oid = co1.EntityOid
                 INNER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] ct ON co1.ContractOid = ct.ContractOid
+            WHERE
+                (co1.isTerminated = 0)
         ) AS conCheck ON entity_1.oid = conCheck.oid
     WHERE
         (Comment_1.text IS NOT NULL)

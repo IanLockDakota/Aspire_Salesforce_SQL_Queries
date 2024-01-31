@@ -8,9 +8,9 @@ EXEC dbo.SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Equipment_ASPIRE__c_ups
 
 EXEC dbo.SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Invoice_ASPIRE__c_upsert','InvoiceDetailOID__c';
 
-EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Notes_ASPIRE__c_upsert','CommentOID__c'
+EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Notes_ASPIRE__c_upsert','CommentOID__c';
 
-EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Payment_ASPIRE__c_upsert','CashReceiptDetailOID__C'
+EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Payment_ASPIRE__c_upsert','CashReceiptDetailOID__C';
 
 EXEC dbo.SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Scheduled_Billables_ASPIRE__c_upsert','ScheduleDefinitionOID__c';
 

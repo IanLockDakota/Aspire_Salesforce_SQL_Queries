@@ -17,18 +17,19 @@ ContractEFT.ResumeDate AS ResumeDate__c,
 ContractEFT.LastChangeDateTime AS LastChangeDateTime__c,
 ContractEFT.LastChangeOperator AS LastChangeOperator__c
 
-FROM            [ASPIRESQL].[AspireDakota].[dbo].[AchBankAccount] INNER JOIN
-                         [ASPIRESQL].[AspireDakota].[dbo].[ContractEFT] ON AchBankAccount.AchBankAccountOid = ContractEFT.ACHBankAccountOid INNER JOIN
-                         [ASPIRESQL].[AspireDakota].[dbo].[AchBank] ON AchBankAccount.AchBankOid = AchBank.AchBankOid LEFT OUTER JOIN
-                         [ASPIRESQL].[AspireDakota].[dbo].[Contract] ON ContractEFT.ContractOid = Contract.ContractOid LEFT OUTER JOIN
-                                (SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS OppurtunityID
-                                  FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
-                                  LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid LEFT OUTER JOIN
-                                  [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
-                                  WHERE GF.oid = 23
-                                  GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value
-                                ) AS OppIDTable ON contract.ContractOid = OppIDTable.ref_oid
-WHERE        (Contract.IsBooked = 1) AND (Contract.CompanyOid = 1) AND (OppIDTable.opportunityID IS NOT NULL)) AS Source
+FROM            
+    [ASPIRESQL].[AspireDakota].[dbo].[Contract]
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractEFT] ON Contract.ContractOid = ContractEFT.ContractOid
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[AchBankAccount] ON ContractEFT.ACHBankAccountOid = AchBankAccount.AchBankAccountOid
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[AchBank] ON AchBankAccount.AchBankOid = AchBank.AchBankOid
+    LEFT OUTER JOIN
+        (SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS OppurtunityID
+            FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid LEFT OUTER JOIN
+            [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
+            WHERE GF.oid = 23
+            GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON contract.ContractOid = OppIDTable.ref_oid
+WHERE        (Contract.isTerminated = 0) AND (Contract.IsBooked = 1) AND (Contract.CompanyOid = 1) AND (OppIDTable.OppurtunityID IS NOT NULL) AND (AchBankAccount.AccountNumber Is NOT NULL)) AS Source
 ON Target.ContractEFTOid__c = Source.ContractEFTOid__c -- Add any additional conditions for matching records
 
 WHEN MATCHED THEN

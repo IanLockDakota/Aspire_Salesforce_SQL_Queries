@@ -353,6 +353,7 @@ WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.Opportunity__c,
         Target.Gross_Receivable__c = Source.Gross_Receivable__c,
+        Target.Original_Gross_Receivable__c = Source.Original_Gross_Receivable__c,
         Target.Payments_Made__c = Source.Payments_Made__c,
         Target.Balance_Remaining__c = Source.Balance_Remaining__c,
         Target.Unearned_Finance__c = ISNULL(Source.Unearned_Finance__c,0),
@@ -373,6 +374,7 @@ WHEN NOT MATCHED THEN
         contractOID__c,
         Opportunity__c,
         Gross_Receivable__c,
+        Original_Gross_Receivable__c,
         Payments_Made__c,
         Balance_Remaining__c,
         Unearned_Finance__c,
@@ -391,6 +393,7 @@ WHEN NOT MATCHED THEN
         Source.contractOID__c,
         Source.Opportunity__c,
         Source.Gross_Receivable__c,
+        Source.Original_Gross_Receivable__c,
         Source.Payments_Made__c,
         Source.Balance_Remaining__c,
         ISNULL(Source.Unearned_Finance__c, 0),
