@@ -64,9 +64,7 @@ FROM
 WHERE
 	(OppIDTable.opportunityID IS NOT NULL)) AS source ON Target.ContractOID__c = Source.ContractOID__c
 
-
 /*Upsert capabilities*/
-
 WHEN MATCHED THEN
     UPDATE SET
         Target.Opportunity__c = Source.OpportunityID__c,
@@ -84,7 +82,6 @@ WHEN MATCHED THEN
         Target.TerminationDate__c = Source.TerminationDate__c,
         Target.LastChangeOperator__c = Source.LastChangeOperator__c,
         Target.LastChangeDateTime__c = Source.LastChangeDateTime__c
-
 
 WHEN NOT MATCHED THEN
     INSERT (
@@ -105,8 +102,6 @@ WHEN NOT MATCHED THEN
         TerminationDate__c,
         LastChangeOperator__c,
         LastChangeDateTime__c
-
-
     ) VALUES (
         Source.ID,
         Source.ContractOID__c,
@@ -125,6 +120,5 @@ WHEN NOT MATCHED THEN
         Source.TerminationDate__c,
         Source.LastChangeOperator__c,
         Source.LastChangeDateTime__c
-
         );
 

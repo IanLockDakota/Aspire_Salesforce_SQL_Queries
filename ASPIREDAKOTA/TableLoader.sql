@@ -19,3 +19,5 @@ EXEC dbo.SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Total_Payments_ASPIRE__
 EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Customer_And_Related_Collections__c_upsert','PhoneOID__c';
 
 EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Amort_ASPIRE__c_upsert','LineItemOID__c';
+
+EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Contact_Collector_ASPIRE__c_upsert','ContractOID__C';

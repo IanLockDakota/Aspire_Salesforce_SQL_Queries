@@ -1,8 +1,8 @@
 /*datetime start / python script for storing LastRunTime as @start?*/
-DECLARE @start DATETIME = DATEADD(DAY, -1, GETDATE())
+DECLARE @start DATETIME = DATEADD(MINUTE, -60, GETDATE())
 DECLARE @end DATETIME = GETDATE()
 
-MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
+MERGE INTO Contact_Collector_ASPIRE__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
 	c.contractOID AS ContractOID__C,

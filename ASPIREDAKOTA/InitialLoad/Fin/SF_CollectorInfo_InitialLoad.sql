@@ -1,4 +1,4 @@
-MERGE INTO Customer_And_Related_Collections__c_upsert AS Target
+MERGE INTO Contact_Collector_ASPIRE__c_upsert AS Target
 USING (SELECT
 	NULL AS ID,
 	c.contractOID AS ContractOID__C,
