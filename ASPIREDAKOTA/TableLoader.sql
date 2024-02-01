@@ -21,3 +21,5 @@ EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Customer_And_Related_Collec
 EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Amort_ASPIRE__c_upsert','LineItemOID__c';
 
 EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Contact_Collector_ASPIRE__c_upsert','ContractOID__C';
+
+EXEC SF_TableLoader 'UPSERT:bulkapi2','SALESFORCE3','Contract_ASPIRE__c_upsert','ContractOID__C';

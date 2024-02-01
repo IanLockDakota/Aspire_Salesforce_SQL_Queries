@@ -2,7 +2,7 @@ MERGE INTO Contract_ASPIRE__c_upsert AS Target
 USING (SELECT
     NULL as ID,
 	c.ContractOID AS ContractOID__c,
-	OppIDTable.opportunityID AS OpportunityID__c,
+	OppIDTable.opportunityID AS Opportunity__c,
 	TC.Description AS TransactionCode__c,
 	ic.Description AS InvoiceCode__c,
 	c.IsSuspendInvoice AS IsSuspendInvoice__c,
@@ -18,47 +18,47 @@ USING (SELECT
 	c.LastChangeOperator as LastChangeOperator__c,
 	c.LastChangeDateTime as LastChangeDateTime__c
 FROM
-	Contract c
+	[ASPIRESQL].[AspireDakota].[dbo].[Contract] c
 	LEFT OUTER JOIN
 		(SELECT *
 		FROM 
-			LTIValues
+			[ASPIRESQL].[AspireDakota].[dbo].[LTIValues]
 		WHERE 
 			table_key = 'FINANCE_PROGRAMS') as program ON c.ProgramOid = program.oid
-	LEFT OUTER JOIN TransactionCode tc ON c.TransactionCodeOid = tc.TransactionCodeOid
-	LEFT OUTER JOIN InvoiceCode ic ON c.InvoiceCodeOid = ic.InvoiceCodeOid
-    LEFT OUTER JOIN ContractTerm ct ON c.ContractOid = CT.ContractOid
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[TransactionCode] tc ON c.TransactionCodeOid = tc.TransactionCodeOid
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[InvoiceCode] ic ON c.InvoiceCodeOid = ic.InvoiceCodeOid
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[ContractTerm] ct ON c.ContractOid = CT.ContractOid
 	LEFT OUTER JOIN
 		(SELECT
 			*
 		FROM
-			Status
+			[ASPIRESQL].[AspireDakota].[dbo].[Status]
 		WHERE status_type = 'CONTRACT') AS status ON c.StatusOid = status.oid
-	LEFT OUTER JOIN InvoiceLeadDays ild ON c.InvoiceLeadDaysOid = ild.InvoiceLeadDaysOid
+	LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[InvoiceLeadDays] ild ON c.InvoiceLeadDaysOid = ild.InvoiceLeadDaysOid
 	LEFT OUTER JOIN
 		(SELECT *
 		FROM 
-			LTIValues
+			[ASPIRESQL].[AspireDakota].[dbo].[LTIValues]
 		WHERE 
 			table_key = 'CONTRACT_TYPE2') as ct2 ON c.ContractType2Oid = ct2.oid
 	LEFT OUTER JOIN
 		(SELECT *
 		FROM 
-			LTIValues
+			[ASPIRESQL].[AspireDakota].[dbo].[LTIValues]
 		WHERE 
 			table_key = 'CompoundingPeriod') as compound ON c.CompoundingPeriod = compound.data_value
 	LEFT OUTER JOIN
 		(SELECT *
 		FROM 
-			LTIValues
+			[ASPIRESQL].[AspireDakota].[dbo].[LTIValues]
 		WHERE 
 			table_key = 'TAX_TREATMENT') as tt ON c.TaxTreatment = tt.data_value
-    LEFT OUTER JOIN CashApplicationCode cac ON c.CashApplicationCodeOid = cac.CashApplicationCodeOid
+    LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[CashApplicationCode] cac ON c.CashApplicationCodeOid = cac.CashApplicationCodeOid
 	LEFT OUTER JOIN
 		(SELECT c.ContractOID, GV.ref_oid, GF.descr, ISNULL((GV.field_value), 'NULL') AS opportunityID
-			FROM GenericField GF 
-            LEFT OUTER JOIN cdataGenericValue GV ON GF.oid = GV.genf_oid
-            LEFT OUTER JOIN Contract c ON c.ContractOid = gv.ref_oid
+			FROM [ASPIRESQL].[AspireDakota].[dbo].[GenericField] GF 
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[cdataGenericValue] GV ON GF.oid = GV.genf_oid
+            LEFT OUTER JOIN [ASPIRESQL].[AspireDakota].[dbo].[Contract] c ON c.ContractOid = gv.ref_oid
             WHERE GF.oid = 23
             GROUP BY c.ContractOID, GV.ref_oid, GF.descr, GV.field_value) AS OppIDTable ON c.ContractOid = OppIDTable.ContractOID
 WHERE
@@ -67,7 +67,7 @@ WHERE
 /*Upsert capabilities*/
 WHEN MATCHED THEN
     UPDATE SET
-        Target.Opportunity__c = Source.OpportunityID__c,
+        Target.Opportunity__c = Source.Opportunity__c,
         Target.TransactionCode__c = Source.TransactionCode__c,
         Target.InvoiceCode__c = Source.InvoiceCode__c,
         Target.IsSuspendInvoice__c = Source.IsSuspendInvoice__c,
@@ -87,7 +87,7 @@ WHEN NOT MATCHED THEN
     INSERT (
         ID,
         ContractOID__c,
-        OpportunityID__c,
+        Opportunity__c,
         TransactionCode__c,
         InvoiceCode__c,
         IsSuspendInvoice__c,
@@ -105,7 +105,7 @@ WHEN NOT MATCHED THEN
     ) VALUES (
         Source.ID,
         Source.ContractOID__c,
-        Source.OpportunityID__c,
+        Source.Opportunity__c,
         Source.TransactionCode__c,
         Source.InvoiceCode__c,
         Source.IsSuspendInvoice__c,
