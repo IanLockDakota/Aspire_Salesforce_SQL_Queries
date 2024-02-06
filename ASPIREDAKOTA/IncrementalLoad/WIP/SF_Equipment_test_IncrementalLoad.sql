@@ -28,13 +28,18 @@ Last change: 12/5/2023
 Other Notes:
     - 
 */
+
+-- DATETIME VARIABLES
+DECLARE @start DATETIME = DATEADD(HOUR, -1, GETDATE())
+DECLARE @end DATETIME = GETDATE()
+
+
 MERGE INTO Equipment_ASPIRE__c_upsert AS Target
 USING (SELECT
     NULL AS ID,
     c.ContractOID AS ContractOID__C,
     OppIDTable.opportunityID AS Opportunity__c,
     eid.EquipmentOID AS EquipmentOID__c,
-    ci.ContractItemOID AS ContractItemOID__c,
     eid.serialnumber AS SerialNumber__c,
 	CONCAT(ISNULL((NULLIF(el.addr_line1,' ') + ', '),''),ISNULL((NULLIF(el.addr_line2,' ') + ', '),''),ISNULL((NULLIF(el.addr_line3,' ') + ', '),''),el.city, ', ', el.state) as EquipmentLocation__c,
 	CASE 
@@ -122,7 +127,8 @@ WHERE
 	AND (el.rownum = 1)
 	AND (ci.ContractItemTypeOid = 1)
     AND (c.ContractId NOT LIKE '%R%')
-    AND (OppIDTable.opportunityID IS NOT NULL))  AS Source
+    AND (OppIDTable.opportunityID IS NOT NULL)
+    AND (ce.LastChangeDateTime BETWEEN @START and @END))  AS Source
 ON Target.EquipmentOID__c = Source.EquipmentOID__c
 
 
