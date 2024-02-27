@@ -10,17 +10,13 @@ SELECT DISTINCT
 	EntityContractInfo.ref_oid as ContractOID,
 	OppIDTable.opportunityID,
 	AB.BankName,
-	AB.DfiIdentificationNumber as [DFI ID],
+	AB.DfiIdentificationNumber as Routing,
+	ABA.AccountNumber AS UncensoredBankAccount,
 	STUFF(ABA.AccountNumber, 1, /*length*/CASE WHEN LEN(ABA.AccountNumber) < 4 THEN LEN(ABA.AccountNumber) ELSE LEN(ABA.AccountNumber) - 4 END, 
 	REPLICATE('x', CASE WHEN LEN(ABA.AccountNumber) < 4 THEN LEN(ABA.AccountNumber) ELSE LEN(ABA.AccountNumber) - 4 END)) AS AccountNumber__c,
 	lti1.descr,
 	lti2.descr,
-	CASE
-		WHEN ABA.Active = 1 AND CEFT.ACHBankAccountOid IS NOT NULL THEN 'TRUE'
-		WHEN ABA.Active = 1 AND CEFT.ACHBankAccountOid IS NULL THEN 'FALSE'
-		WHEN ABA.Active = 0 AND CEFT.ACHBankAccountOid IS NULL THEN 'FALSE'
-		ELSE Null
-	END AS Active,
+	ABA.active,
 	ABA.LastChangeOperator,
 	ABA.LastChangeDateTime
 FROM 
